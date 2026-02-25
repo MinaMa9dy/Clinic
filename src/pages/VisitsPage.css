@@ -1,0 +1,63 @@
+.visits-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.visit-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-decoration: none;
+    cursor: pointer;
+    padding: 16px 20px;
+}
+
+.visit-card__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(6, 182, 212, 0.12);
+    color: var(--color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.visit-card__info {
+    flex: 1;
+    min-width: 0;
+}
+
+.visit-card__top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+}
+
+.visit-card__date {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.visit-card__bottom {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.visit-card__detail {
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+}
+
+.visit-card__arrow {
+    color: var(--color-text-muted);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}

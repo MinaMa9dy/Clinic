@@ -1,0 +1,99 @@
+.patient-profile {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 28px;
+    padding: 24px;
+}
+
+.patient-profile__avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.patient-profile__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    flex: 1;
+}
+
+.patient-profile__label {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.patient-profile__value {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+/* Tabs */
+.detail-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    background: var(--color-surface);
+    padding: 4px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    overflow-x: auto;
+}
+
+.detail-tabs__btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--color-text-secondary);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.detail-tabs__btn:hover {
+    color: var(--color-text);
+    background: var(--color-hover);
+}
+
+.detail-tabs__btn--active {
+    background: var(--color-primary-alpha);
+    color: var(--color-primary);
+}
+
+@media (max-width: 640px) {
+    .patient-profile {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .patient-profile__grid {
+        grid-template-columns: 1fr 1fr;
+        text-align: left;
+    }
+
+    .detail-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
