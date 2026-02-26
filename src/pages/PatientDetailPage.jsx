@@ -227,7 +227,7 @@ const PatientDetailPage = () => {
 
     return (
         <div className="patient-detail fade-in">
-            <div className="page-header" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div className="page-header" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                 <button className="btn btn--secondary btn--sm" onClick={() => navigate('/patients')}>
                     <FiArrowLeft /> Back
                 </button>
@@ -398,7 +398,7 @@ const PatientDetailPage = () => {
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                     {patient.bloodPressures?.map((bp) => (
-                                        <div key={bp.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'var(--color-hover)', borderRadius: 10, fontSize: '0.85rem' }}>
+                                        <div key={bp.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, padding: '8px 12px', background: 'var(--color-hover)', borderRadius: 10, fontSize: '0.85rem' }}>
                                             <span><strong>{bp.systolic}/{bp.diastolic}</strong> mmHg · Pulse: {bp.pulse}</span>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                                 <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>{new Date(bp.recordedAt).toLocaleDateString()}</span>
@@ -432,7 +432,7 @@ const PatientDetailPage = () => {
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                     {patient.bloodGlucoses?.map((bg) => (
-                                        <div key={bg.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'var(--color-hover)', borderRadius: 10, fontSize: '0.85rem' }}>
+                                        <div key={bg.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, padding: '8px 12px', background: 'var(--color-hover)', borderRadius: 10, fontSize: '0.85rem' }}>
                                             <span><strong>{bg.result}</strong> mg/dL · {BloodGlucoseOptions[bg.type]}</span>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                                 <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>{new Date(bg.recordedAt).toLocaleDateString()}</span>
@@ -472,7 +472,7 @@ const PatientDetailPage = () => {
                                         </div>
                                         <button
                                             onClick={() => handleDeleteAllergy(a.id)}
-                                            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', padding: 2, borderRadius: '50%', background: 'rgba(0,0,0,0.1)' }}
+                                            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', padding: 2, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.1)' }}
                                             title="Remove Allergy"
                                         >
                                             <FiX size={14} />
