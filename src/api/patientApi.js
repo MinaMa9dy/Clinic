@@ -21,3 +21,7 @@ export const updateMedicalHistory = async (patientId, history) => {
     });
     return response.data;
 };
+export const deletePatient = async (id) => {
+    const response = await api.delete(`/Patient/${id}`);
+    return response.data;
+};

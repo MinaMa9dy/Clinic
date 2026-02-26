@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { searchPatients } from '../api/patientApi';
+import { searchPatients, deletePatient } from '../api/patientApi';
 import { toast } from 'react-toastify';
 import { GenderOptions, BloodTypeOptions } from '../utils/enums';
-import { FiSearch, FiPlus, FiUser, FiPhone, FiChevronRight } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiUser, FiPhone, FiChevronRight, FiTrash2 } from 'react-icons/fi';
+import ConfirmModal from '../components/ConfirmModal';
 import './PatientsPage.css';
 
 const PatientsPage = () => {
@@ -14,6 +15,12 @@ const PatientsPage = () => {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const PAGE_SIZE = 10;
+
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        patientId: null,
+        patientName: ''
+    });
 
     const fetchPatients = async (q = '', pageNum = 1) => {
         setLoading(true);
@@ -47,6 +54,32 @@ const PatientsPage = () => {
         setPage(newPage);
         fetchPatients(query, newPage);
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleDeleteClick = (e, patient) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setConfirmModal({
+            isOpen: true,
+            patientId: patient.id,
+            patientName: patient.fullName
+        });
+    };
+
+    const confirmDelete = async () => {
+        try {
+            const result = await deletePatient(confirmModal.patientId);
+            if (result.isSuccess) {
+                toast.success('Patient deleted successfully');
+                fetchPatients(query, page);
+            } else {
+                toast.error(result.message || 'Failed to delete patient');
+            }
+        } catch (error) {
+            toast.error('An error occurred while deleting the patient');
+        } finally {
+            setConfirmModal({ ...confirmModal, isOpen: false });
+        }
     };
 
     return (
@@ -105,7 +138,17 @@ const PatientsPage = () => {
                                     </span>
                                 </div>
                             </div>
-                            <FiChevronRight className="patient-card__arrow" />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <button
+                                    onClick={(e) => handleDeleteClick(e, patient)}
+                                    className="btn btn--danger btn--sm"
+                                    style={{ zIndex: 2, padding: '8px' }}
+                                    title="Delete Patient"
+                                >
+                                    <FiTrash2 size={16} />
+                                </button>
+                                <FiChevronRight className="patient-card__arrow" />
+                            </div>
                         </Link>
                     ))}
 
@@ -133,6 +176,14 @@ const PatientsPage = () => {
                     )}
                 </div>
             )}
+
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                onConfirm={confirmDelete}
+                title="Delete Patient"
+                message={`Are you sure you want to permanently delete patient "${confirmModal.patientName}" and all associated medical records?`}
+            />
         </div>
     );
 };

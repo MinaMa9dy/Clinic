@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getPatientById, updateMedicalHistory } from '../api/patientApi';
+import { getPatientById, updateMedicalHistory, deletePatient } from '../api/patientApi';
 import { getVisitsByPatient, deleteVisit } from '../api/visitApi';
 import { getAllergiesByPatientId, addAllergy, deleteAllergy } from '../api/allergyApi';
 import { addBloodPressure, deleteBloodPressure } from '../api/bloodPressureApi';
@@ -194,6 +194,27 @@ const PatientDetailPage = () => {
         });
     };
 
+    const handleDeletePatient = () => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete Patient Record',
+            message: `Are you sure you want to permanently delete patient "${patient.fullName}"? This action cannot be undone and will remove all medical history, visits, and vital records.`,
+            onConfirm: async () => {
+                try {
+                    const result = await deletePatient(id);
+                    if (result.isSuccess) {
+                        toast.success('Patient record deleted successfully');
+                        navigate('/patients');
+                    } else {
+                        toast.error(result.message || 'Failed to delete patient');
+                    }
+                } catch {
+                    toast.error('An error occurred while deleting the patient record');
+                }
+            }
+        });
+    };
+
     if (loading) return <div className="loading"><div className="spinner"></div></div>;
     if (!patient) return <div className="empty-state"><h3 className="empty-state__title">Patient not found</h3></div>;
 
@@ -213,6 +234,11 @@ const PatientDetailPage = () => {
                 <div>
                     <h1 className="page-header__title">{patient.fullName}</h1>
                     <p className="page-header__subtitle">Patient Profile</p>
+                </div>
+                <div style={{ marginLeft: 'auto' }}>
+                    <button className="btn btn--danger btn--sm" onClick={handleDeletePatient}>
+                        <FiTrash2 /> Delete Patient
+                    </button>
                 </div>
             </div>
 
