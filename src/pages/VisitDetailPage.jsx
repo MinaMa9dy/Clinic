@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useAuth } from '../context/AuthContext';
 import { MedicalVisitOptions } from '../utils/enums';
-import { getVisitById } from '../api/visitApi';
+import { getVisitById, updateVisit } from '../api/visitApi';
+import { getPatientById } from '../api/patientApi';
 import { addExamination, deleteExamination } from '../api/examinationApi';
 import { addDrug, deleteDrug } from '../api/drugApi';
 import { addLabTest, deleteLabTest } from '../api/labTestApi';
 import { addRadiology, deleteRadiology } from '../api/radiologyApi';
-import { FiArrowLeft, FiPlus, FiTrash2, FiClipboard, FiPackage, FiActivity, FiImage } from 'react-icons/fi';
+import { FiArrowLeft, FiPlus, FiTrash2, FiClipboard, FiPackage, FiActivity, FiImage, FiPrinter } from 'react-icons/fi';
 import ConfirmModal from '../components/ConfirmModal';
 import PhotoManager from '../components/PhotoManager';
 import './VisitDetailPage.css';
@@ -15,8 +17,21 @@ import './VisitDetailPage.css';
 const VisitDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { doctor } = useAuth();
     const visitId = Number(id);
     const [loading, setLoading] = useState(true);
+    const [patient, setPatient] = useState(null);
+
+    const [visit, setVisit] = useState(null);
+    const [isEditingVisit, setIsEditingVisit] = useState(false);
+    const [visitForm, setVisitForm] = useState({
+        id: visitId,
+        patientId: 0,
+        doctorId: doctor?.id || 0,
+        type: 1,
+        fee: '',
+        notes: ''
+    });
 
     // We'll store visit data from the visits we loaded earlier
     // Since there's no direct "get visit by id" endpoint, we pass data via location state or re-fetch by patient/doctor
@@ -50,11 +65,26 @@ const VisitDetailPage = () => {
             try {
                 const result = await getVisitById(visitId);
                 if (result.isSuccess) {
-                    const visit = result.data;
-                    setExaminations(visit.examinations || []);
-                    setDrugs(visit.drugs || []);
-                    setLabTests(visit.labTests || []);
-                    setRadiologies(visit.radiologies || []);
+                    const visitObj = result.data;
+                    setVisit(visitObj);
+                    setVisitForm({
+                        id: visitObj.id,
+                        patientId: visitObj.patientId,
+                        doctorId: visitObj.doctorId || doctor?.id || 0,
+                        type: visitObj.type,
+                        fee: visitObj.fee,
+                        notes: visitObj.notes || ''
+                    });
+                    setExaminations(visitObj.examinations || []);
+                    setDrugs(visitObj.drugs || []);
+                    setLabTests(visitObj.labTests || []);
+                    setRadiologies(visitObj.radiologies || []);
+
+                    // Fetch patient details for the prescription
+                    if (visitObj.patientId) {
+                        const patResult = await getPatientById(visitObj.patientId);
+                        if (patResult.isSuccess) setPatient(patResult.data);
+                    }
                 } else {
                     toast.error(result.message || 'Failed to load visit details');
                 }
@@ -75,6 +105,31 @@ const VisitDetailPage = () => {
     const [showForm, setShowForm] = useState(false);
 
     // Add handlers
+
+    const handleUpdateVisit = async (e) => {
+        e.preventDefault();
+        try {
+            const dto = {
+                id: visitForm.id,
+                patientId: Number(visitForm.patientId),
+                doctorId: Number(visitForm.doctorId),
+                type: Number(visitForm.type),
+                fee: Number(visitForm.fee),
+                notes: visitForm.notes
+            };
+            const result = await updateVisit(dto);
+            if (result.isSuccess) {
+                toast.success('Visit updated successfully');
+                setVisit({ ...visit, ...dto });
+                setIsEditingVisit(false);
+            } else {
+                toast.error(result.message);
+            }
+        } catch {
+            toast.error('Failed to update visit');
+        }
+    };
+
     const handleAddExam = async (e) => {
         e.preventDefault();
         try {
@@ -173,19 +228,102 @@ const VisitDetailPage = () => {
         });
     };
 
-    const handleDeleteRadio = (radioId) => {
+    const handleDeleteRadio = (rId) => {
         setConfirmModal({
             isOpen: true,
-            title: 'Delete Radiology',
+            title: 'Remove Radiology',
             message: 'Are you sure you want to remove this radiology record?',
             onConfirm: async () => {
                 try {
-                    await deleteRadiology(radioId);
-                    setRadiologies(radiologies.filter(r => r.id !== radioId));
-                    toast.success('Radiology deleted');
-                } catch { toast.error('Failed to delete'); }
+                    await deleteRadiology(rId);
+                    toast.success('Radiology record removed');
+                    setRadiologies(radiologies.filter(r => r.id !== rId));
+                } catch { toast.error('Failed to remove radiology'); }
             }
         });
+    };
+
+    const handlePrintPrescription = () => {
+        if (!drugs || drugs.length === 0) {
+            toast.info('No drugs to print');
+            return;
+        }
+
+        const printWindow = window.open('', '_blank', 'width=800,height=900');
+        const dateStr = new Date(visit?.visitDate).toLocaleDateString();
+
+        const html = `
+            <html>
+            <head>
+                <title>Prescription - ${patient?.fullName || 'Patient'}</title>
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+                    .header { border-bottom: 3px solid #007bff; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
+                    .clinic-name { font-size: 28px; font-weight: 800; color: #007bff; margin: 0; text-transform: uppercase; }
+                    .rx-symbol { font-size: 48px; font-weight: bold; color: #007bff; margin-top: 20px; }
+                    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 40px; background: #f8f9fa; padding: 20px; border-radius: 8px; }
+                    .info-item b { color: #555; font-size: 0.9em; text-transform: uppercase; margin-right: 10px; }
+                    .drug-list { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    .drug-item { font-size: 1.1em; border-bottom: 1px solid #eee; padding: 15px 5px; }
+                    .drug-name { font-weight: bold; font-size: 1.2em; }
+                    .drug-dose { color: #666; margin-left: 15px; font-style: italic; }
+                    .footer { margin-top: 100px; display: flex; justify-content: space-between; align-items: flex-end; }
+                    .signature { border-top: 1px solid #000; width: 250px; text-align: center; padding-top: 10px; font-weight: bold; }
+                    .doctor-info { text-align: right; }
+                    @media print {
+                        body { padding: 20px; }
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div>
+                        <h1 class="clinic-name">MyClinic Medical Center</h1>
+                        <p style="margin: 5px 0; color: #666;">High Quality Healthcare Services</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p style="margin: 0;"><b>Date:</b> ${dateStr}</p>
+                        <p style="margin: 0;"><b>Visit ID:</b> #${visitId}</p>
+                    </div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item"><b>Patient:</b> ${patient?.fullName || '—'}</div>
+                    <div class="info-item"><b>Age:</b> ${patient?.dateOfBirth ? Math.floor((new Date() - new Date(patient.dateOfBirth)) / 31557600000) : '—'}</div>
+                    <div class="info-item"><b>Gender:</b> ${patient?.gender === 1 ? 'Male' : 'Female'}</div>
+                    <div class="info-item"><b>Blood Type:</b> ${['—', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'][patient?.bloodType] || '—'}</div>
+                </div>
+
+                <div class="rx-symbol">℞</div>
+                
+                <div class="drug-list">
+                    ${drugs.map(drug => `
+                        <div class="drug-item">
+                            <span class="drug-name">${drug.drugName}</span>
+                            <span class="drug-dose">${drug.dose}</span>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="footer">
+                    <div class="signature">Patient's Signature</div>
+                    <div class="doctor-info">
+                        <p style="margin: 0; font-size: 1.1em;"><b>Dr. ${doctor?.fullName || 'Medical Practitioner'}</b></p>
+                        <p style="margin: 0; color: #666; font-size: 0.9em;">Medical Practitioner</p>
+                        <div style="margin-top: 40px; border-top: 1px solid #000; width: 200px; display: inline-block;">Stamp / Signature</div>
+                    </div>
+                </div>
+
+                <div class="no-print" style="margin-top: 50px; text-align: center;">
+                    <button onclick="window.print()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1em;">Print Now</button>
+                </div>
+            </body>
+            </html>
+        `;
+
+        printWindow.document.write(html);
+        printWindow.document.close();
     };
 
     const tabs = [
@@ -205,12 +343,66 @@ const VisitDetailPage = () => {
                     <h1 className="page-header__title">Visit #{visitId}</h1>
                     <p className="page-header__subtitle">View and manage visit details</p>
                 </div>
+                {!loading && visit && (
+                    <div style={{ marginLeft: 'auto' }}>
+                        <button className="btn btn--primary btn--sm" onClick={() => setIsEditingVisit(!isEditingVisit)}>
+                            {isEditingVisit ? 'Cancel Edit' : 'Edit Visit'}
+                        </button>
+                    </div>
+                )}
             </div>
 
             {loading ? (
                 <div className="loading"><div className="spinner"></div></div>
             ) : (
                 <>
+                    {/* Visit Info */}
+                    <div className="card" style={{ marginBottom: 24 }}>
+                        {isEditingVisit ? (
+                            <form onSubmit={handleUpdateVisit} className="visit-inline-form" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                                    <div style={{ flex: 1, minWidth: 200 }}>
+                                        <label className="form-label">Type</label>
+                                        <select className="form-select" value={visitForm.type} onChange={e => setVisitForm({ ...visitForm, type: parseInt(e.target.value) })}>
+                                            <option value={1}>Regular</option>
+                                            <option value={2}>FollowUp</option>
+                                        </select>
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 200 }}>
+                                        <label className="form-label">Fee</label>
+                                        <input type="number" className="form-input" value={visitForm.fee} onChange={e => setVisitForm({ ...visitForm, fee: e.target.value })} required />
+                                    </div>
+                                </div>
+                                <div style={{ marginTop: 16 }}>
+                                    <label className="form-label">Notes</label>
+                                    <textarea className="form-textarea" value={visitForm.notes} onChange={e => setVisitForm({ ...visitForm, notes: e.target.value })} />
+                                </div>
+                                <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+                                    <button type="submit" className="btn btn--primary">Save Changes</button>
+                                </div>
+                            </form>
+                        ) : (
+                            <div className="grid-4" style={{ gap: 16 }}>
+                                <div>
+                                    <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Date</span>
+                                    <div style={{ fontWeight: 600 }}>{new Date(visit.visitDate).toLocaleDateString()}</div>
+                                </div>
+                                <div>
+                                    <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Type</span>
+                                    <div><span className={`badge ${visit.type === 1 ? 'badge--primary' : 'badge--warning'}`}>{MedicalVisitOptions[visit.type]}</span></div>
+                                </div>
+                                <div>
+                                    <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Fee</span>
+                                    <div style={{ fontWeight: 600 }}>${visit.fee}</div>
+                                </div>
+                                <div>
+                                    <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Notes</span>
+                                    <div>{visit.notes || '—'}</div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Tabs */}
                     <div className="detail-tabs">
                         {tabs.map((tab) => (
@@ -266,7 +458,14 @@ const VisitDetailPage = () => {
                     {activeTab === 'drugs' && (
                         <div className="card">
                             <div className="visit-section-header">
-                                <h3>Prescriptions</h3>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                    <h3>Prescriptions</h3>
+                                    {drugs.length > 0 && (
+                                        <button className="btn btn--secondary btn--sm" onClick={handlePrintPrescription} title="Print Prescription">
+                                            <FiPrinter /> Print
+                                        </button>
+                                    )}
+                                </div>
                                 <button className="btn btn--primary btn--sm" onClick={() => setShowForm(!showForm)}><FiPlus /> Add</button>
                             </div>
                             {showForm && (

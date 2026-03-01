@@ -15,10 +15,8 @@ export const searchPatients = async (q = '', pageNumber = 1, pageSize = 10) => {
     return response.data;
 };
 
-export const updateMedicalHistory = async (patientId, history) => {
-    const response = await api.put(`/Patient/${patientId}/medical-history`, JSON.stringify(history), {
-        headers: { 'Content-Type': 'application/json' }
-    });
+export const updatePatient = async (patientDto) => {
+    const response = await api.put('/Patient', patientDto);
     return response.data;
 };
 export const deletePatient = async (id) => {

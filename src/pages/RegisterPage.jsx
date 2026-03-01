@@ -45,7 +45,7 @@ const RegisterPage = () => {
                 toast.error(result.message || 'Registration failed');
             }
         } catch (err) {
-            toast.error(err.response?.data || 'Registration failed. Please try again.');
+            toast.error(err.response?.data?.message || err.message || 'Registration failed. Please try again.');
         } finally {
             setLoading(false);
         }

@@ -22,14 +22,14 @@ const LoginPage = () => {
         try {
             const result = await loginDoctor(form);
             if (result.isSuccess) {
-                login(result.data);
+                login(result.data); // result.data = { token, refreshToken, fullName, email, expiresAt }
                 toast.success('Welcome back!');
                 navigate('/');
             } else {
                 toast.error(result.message || 'Login failed');
             }
         } catch (err) {
-            toast.error(err.response?.data || 'Login failed. Please try again.');
+            toast.error(err.response?.data?.message || err.message || 'Login failed. Please try again.');
         } finally {
             setLoading(false);
         }

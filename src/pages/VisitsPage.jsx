@@ -12,6 +12,9 @@ const VisitsPage = () => {
     const { doctor } = useAuth();
     const [visits, setVisits] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const PAGE_SIZE = 10;
     const [confirmModal, setConfirmModal] = useState({ isOpen: false, visitId: null });
 
     const handleDeleteVisit = (e, visitId) => {
@@ -25,21 +28,27 @@ const VisitsPage = () => {
             const result = await deleteVisit(confirmModal.visitId);
             if (result.isSuccess) {
                 toast.success('Visit deleted');
-                fetchVisits();
+                fetchVisits(page);
             } else toast.error(result.message);
-        } catch { toast.error('Failed to delete visit'); }
+        } catch { toast.error('Failed to delete visit'); } finally {
+            setConfirmModal({ isOpen: false, visitId: null });
+        }
     };
 
     useEffect(() => {
-        fetchVisits();
-    }, []);
+        fetchVisits(1);
+    }, [doctor?.id]);
 
-    const fetchVisits = async () => {
+    const fetchVisits = async (pageNum = 1) => {
         setLoading(true);
         try {
             if (doctor?.id) {
-                const result = await getVisitsByDoctor(doctor.id);
-                if (result.isSuccess) setVisits(result.data || []);
+                const result = await getVisitsByDoctor(doctor.id, pageNum, PAGE_SIZE);
+                if (result.isSuccess) {
+                    setVisits(result.data || []);
+                    setHasMore((result.data || []).length === PAGE_SIZE);
+                    setPage(pageNum);
+                }
                 else toast.error(result.message || 'Failed to load visits');
             }
         } catch {
@@ -47,6 +56,11 @@ const VisitsPage = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handlePageChange = (newPage) => {
+        fetchVisits(newPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     return (
@@ -101,6 +115,28 @@ const VisitsPage = () => {
                             </div>
                         </Link>
                     ))}
+                </div>
+            )}
+
+            {!loading && visits.length > 0 && (page > 1 || hasMore) && (
+                <div className="pagination" style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 24, padding: '12px 0' }}>
+                    <button
+                        className="btn btn--secondary btn--sm"
+                        onClick={() => handlePageChange(page - 1)}
+                        disabled={page === 1}
+                    >
+                        Previous
+                    </button>
+                    <span style={{ display: 'flex', alignItems: 'center', fontWeight: 600, fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
+                        Page {page}
+                    </span>
+                    <button
+                        className="btn btn--secondary btn--sm"
+                        onClick={() => handlePageChange(page + 1)}
+                        disabled={!hasMore}
+                    >
+                        Next
+                    </button>
                 </div>
             )}
 

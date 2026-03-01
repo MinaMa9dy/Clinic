@@ -76,7 +76,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
                                 {doctor.fullName?.charAt(0)?.toUpperCase() || 'D'}
                             </div>
                             <div className="sidebar__user-info">
-                                <span className="sidebar__user-name">{doctor.fullName || 'Doctor'}</span>
+                                <span className="sidebar__user-name">Doctor / {doctor.fullName || 'Doctor'}</span>
                                 <span className="sidebar__user-role">Doctor</span>
                             </div>
                         </div>

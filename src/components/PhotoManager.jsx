@@ -20,9 +20,8 @@ const PhotoManager = ({ isOpen, onClose, ownerId, ownerType, title }) => {
         setLoading(true);
         try {
             const result = await getPhotosByRelativeId(ownerId, ownerType);
-            // The backend returns the list directly or wrapped in Result
-            // Based on PhotoController, it returns Ok(photos) which is the list
-            setPhotos(Array.isArray(result) ? result : (result.data || []));
+            // Backend returns Ok(photos) which is a plain array directly
+            setPhotos(Array.isArray(result) ? result : []);
         } catch (error) {
             console.error('Error fetching photos:', error);
             setPhotos([]);
@@ -55,7 +54,8 @@ const PhotoManager = ({ isOpen, onClose, ownerId, ownerType, title }) => {
         if (!confirm('Are you sure you want to delete this photo?')) return;
 
         try {
-            const result = await deletePhoto(photoId);
+            // Backend requires ownerType as query param to find the correct table
+            const result = await deletePhoto(photoId, ownerType);
             if (result.isSuccess) {
                 toast.success('Photo deleted');
                 setPhotos(photos.filter(p => p.id !== photoId));

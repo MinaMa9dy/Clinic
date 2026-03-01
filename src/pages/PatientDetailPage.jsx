@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getPatientById, updateMedicalHistory, deletePatient } from '../api/patientApi';
+import { getPatientById, updatePatient, deletePatient } from '../api/patientApi';
 import { getVisitsByPatient, deleteVisit } from '../api/visitApi';
 import { getAllergiesByPatientId, addAllergy, deleteAllergy } from '../api/allergyApi';
 import { addBloodPressure, deleteBloodPressure } from '../api/bloodPressureApi';
 import { addBloodGlucose, deleteBloodGlucose } from '../api/bloodGlucoseApi';
 import { toast } from 'react-toastify';
-import { GenderOptions, BloodTypeOptions, MedicalVisitOptions, BloodGlucoseOptions, BloodGlucoseOptionsList } from '../utils/enums';
-import { FiArrowLeft, FiUser, FiCalendar, FiPlus, FiTrash2, FiActivity, FiDroplet, FiHeart, FiAlertCircle, FiX, FiClipboard } from 'react-icons/fi';
+import { GenderOptions, BloodTypeOptions, GenderOptionsList, BloodTypeOptionsList, MedicalVisitOptions, BloodGlucoseOptions, BloodGlucoseOptionsList } from '../utils/enums';
+import { FiArrowLeft, FiUser, FiCalendar, FiPlus, FiTrash2, FiActivity, FiDroplet, FiHeart, FiAlertCircle, FiX, FiClipboard, FiEdit2, FiSave } from 'react-icons/fi';
 import ConfirmModal from '../components/ConfirmModal';
 import './PatientDetailPage.css';
 
@@ -19,6 +19,21 @@ const PatientDetailPage = () => {
     const [allergies, setAllergies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
+
+    // Patient editing
+    const [isEditingPatient, setIsEditingPatient] = useState(false);
+    const [patientForm, setPatientForm] = useState({
+        fullName: '',
+        dateOfBirth: '',
+        gender: 1,
+        bloodType: 1,
+        address: '',
+        phoneNumber: ''
+    });
+
+    const [visitPage, setVisitPage] = useState(1);
+    const [hasMoreVisits, setHasMoreVisits] = useState(true);
+    const VISIT_PAGE_SIZE = 10;
 
     // Allergy form
     const [allergyForm, setAllergyForm] = useState({ name: '', description: '' });
@@ -52,14 +67,26 @@ const PatientDetailPage = () => {
         try {
             const [patientRes, visitsRes, allergiesRes] = await Promise.all([
                 getPatientById(id),
-                getVisitsByPatient(id),
+                getVisitsByPatient(id, 1, VISIT_PAGE_SIZE),
                 getAllergiesByPatientId(id),
             ]);
             if (patientRes.isSuccess) {
                 setPatient(patientRes.data);
                 setHistory(patientRes.data.medicalHistory || '');
+                setPatientForm({
+                    fullName: patientRes.data.fullName || '',
+                    dateOfBirth: patientRes.data.dateOfBirth ? new Date(patientRes.data.dateOfBirth).toISOString().split('T')[0] : '',
+                    gender: patientRes.data.gender || 1,
+                    bloodType: patientRes.data.bloodType || 1,
+                    address: patientRes.data.address || '',
+                    phoneNumber: patientRes.data.phoneNumber || ''
+                });
             }
-            if (visitsRes.isSuccess) setVisits(visitsRes.data || []);
+            if (visitsRes.isSuccess) {
+                setVisits(visitsRes.data || []);
+                setHasMoreVisits((visitsRes.data || []).length === VISIT_PAGE_SIZE);
+                setVisitPage(1);
+            }
             if (allergiesRes.isSuccess) setAllergies(allergiesRes.data || []);
         } catch (err) {
             toast.error('Failed to load patient data');
@@ -68,13 +95,40 @@ const PatientDetailPage = () => {
         }
     };
 
+    const fetchVisits = async (pageNum) => {
+        try {
+            const result = await getVisitsByPatient(id, pageNum, VISIT_PAGE_SIZE);
+            if (result.isSuccess) {
+                setVisits(result.data || []);
+                setHasMoreVisits((result.data || []).length === VISIT_PAGE_SIZE);
+                setVisitPage(pageNum);
+            } else toast.error(result.message || 'Failed to load visits');
+        } catch {
+            toast.error('Failed to load visits');
+        }
+    };
+
+    const handleVisitPageChange = (newPage) => {
+        fetchVisits(newPage);
+    };
+
     const handleSaveHistory = async () => {
         setIsSavingHistory(true);
         try {
-            const result = await updateMedicalHistory(id, history);
+            const dto = {
+                id: patient.id,
+                fullName: patient.fullName,
+                dateOfBirth: patient.dateOfBirth,
+                gender: patient.gender,
+                bloodType: patient.bloodType,
+                medicalHistory: history,
+                address: patient.address,
+                phoneNumber: patient.phoneNumber,
+            };
+            const result = await updatePatient(dto);
             if (result.isSuccess) {
                 toast.success('Medical history updated');
-                setPatient(prev => ({ ...prev, medicalHistory: history }));
+                setPatient({ ...patient, medicalHistory: history });
             } else {
                 toast.error(result.message || 'Failed to update history');
             }
@@ -82,6 +136,32 @@ const PatientDetailPage = () => {
             toast.error('An error occurred while saving history');
         } finally {
             setIsSavingHistory(false);
+        }
+    };
+
+    const handleUpdatePatientDetails = async (e) => {
+        e.preventDefault();
+        try {
+            const dto = {
+                id: patient.id,
+                fullName: patientForm.fullName,
+                dateOfBirth: new Date(patientForm.dateOfBirth).toISOString(),
+                gender: Number(patientForm.gender),
+                bloodType: Number(patientForm.bloodType),
+                medicalHistory: history,
+                address: patientForm.address,
+                phoneNumber: patientForm.phoneNumber,
+            };
+            const result = await updatePatient(dto);
+            if (result.isSuccess) {
+                toast.success('Patient details updated');
+                setPatient({ ...patient, ...dto });
+                setIsEditingPatient(false);
+            } else {
+                toast.error(result.message || 'Failed to update patient details');
+            }
+        } catch (error) {
+            toast.error('Failed to update patient details');
         }
     };
 
@@ -242,33 +322,80 @@ const PatientDetailPage = () => {
                 </div>
             </div>
 
-            {/* Profile Card */}
-            <div className="card patient-profile">
+            <div className="card patient-profile" style={{ position: 'relative' }}>
+                <div style={{ position: 'absolute', top: 16, right: 16 }}>
+                    <button
+                        className={`btn btn--sm ${isEditingPatient ? 'btn--secondary' : 'btn--primary'}`}
+                        onClick={() => setIsEditingPatient(!isEditingPatient)}
+                    >
+                        {isEditingPatient ? <><FiX /> Cancel</> : <><FiEdit2 /> Edit</>}
+                    </button>
+                </div>
+
                 <div className="patient-profile__avatar">
                     <FiUser />
                 </div>
-                <div className="patient-profile__grid">
-                    <div className="patient-profile__item">
-                        <span className="patient-profile__label">Gender</span>
-                        <span className="patient-profile__value">{GenderOptions[patient.gender] || '—'}</span>
+
+                {isEditingPatient ? (
+                    <form onSubmit={handleUpdatePatientDetails} className="patient-profile__form" style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
+                        <div className="grid-2">
+                            <div className="form-group">
+                                <label className="form-label">Full Name</label>
+                                <input type="text" className="form-input" value={patientForm.fullName} onChange={e => setPatientForm({ ...patientForm, fullName: e.target.value })} required />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Phone</label>
+                                <input type="text" className="form-input" value={patientForm.phoneNumber} onChange={e => setPatientForm({ ...patientForm, phoneNumber: e.target.value })} required />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Gender</label>
+                                <select className="form-select" value={patientForm.gender} onChange={e => setPatientForm({ ...patientForm, gender: Number(e.target.value) })}>
+                                    {GenderOptionsList.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Blood Type</label>
+                                <select className="form-select" value={patientForm.bloodType} onChange={e => setPatientForm({ ...patientForm, bloodType: Number(e.target.value) })}>
+                                    {BloodTypeOptionsList.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Date of Birth</label>
+                                <input type="date" className="form-input" value={patientForm.dateOfBirth} onChange={e => setPatientForm({ ...patientForm, dateOfBirth: e.target.value })} required />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Address</label>
+                                <input type="text" className="form-input" value={patientForm.address} onChange={e => setPatientForm({ ...patientForm, address: e.target.value })} required />
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                            <button type="submit" className="btn btn--primary"><FiSave /> Save Details</button>
+                        </div>
+                    </form>
+                ) : (
+                    <div className="patient-profile__grid">
+                        <div className="patient-profile__item">
+                            <span className="patient-profile__label">Gender</span>
+                            <span className="patient-profile__value">{GenderOptions[patient.gender] || '—'}</span>
+                        </div>
+                        <div className="patient-profile__item">
+                            <span className="patient-profile__label">Blood Type</span>
+                            <span className="patient-profile__value badge badge--danger">{BloodTypeOptions[patient.bloodType] || '—'}</span>
+                        </div>
+                        <div className="patient-profile__item">
+                            <span className="patient-profile__label">Phone</span>
+                            <span className="patient-profile__value">{patient.phoneNumber || '—'}</span>
+                        </div>
+                        <div className="patient-profile__item">
+                            <span className="patient-profile__label">Address</span>
+                            <span className="patient-profile__value">{patient.address || '—'}</span>
+                        </div>
+                        <div className="patient-profile__item">
+                            <span className="patient-profile__label">Date of Birth</span>
+                            <span className="patient-profile__value">{patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : '—'}</span>
+                        </div>
                     </div>
-                    <div className="patient-profile__item">
-                        <span className="patient-profile__label">Blood Type</span>
-                        <span className="patient-profile__value badge badge--danger">{BloodTypeOptions[patient.bloodType] || '—'}</span>
-                    </div>
-                    <div className="patient-profile__item">
-                        <span className="patient-profile__label">Phone</span>
-                        <span className="patient-profile__value">{patient.phoneNumber || '—'}</span>
-                    </div>
-                    <div className="patient-profile__item">
-                        <span className="patient-profile__label">Address</span>
-                        <span className="patient-profile__value">{patient.address || '—'}</span>
-                    </div>
-                    <div className="patient-profile__item">
-                        <span className="patient-profile__label">Date of Birth</span>
-                        <span className="patient-profile__value">{patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : '—'}</span>
-                    </div>
-                </div>
+                )}
             </div>
 
             {/* Tabs */}
@@ -371,6 +498,28 @@ const PatientDetailPage = () => {
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+                        )}
+
+                        {!loading && visits.length > 0 && (visitPage > 1 || hasMoreVisits) && (
+                            <div className="pagination" style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 24, padding: '12px 0' }}>
+                                <button
+                                    className="btn btn--secondary btn--sm"
+                                    onClick={() => handleVisitPageChange(visitPage - 1)}
+                                    disabled={visitPage === 1}
+                                >
+                                    Previous
+                                </button>
+                                <span style={{ display: 'flex', alignItems: 'center', fontWeight: 600, fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
+                                    Page {visitPage}
+                                </span>
+                                <button
+                                    className="btn btn--secondary btn--sm"
+                                    onClick={() => handleVisitPageChange(visitPage + 1)}
+                                    disabled={!hasMoreVisits}
+                                >
+                                    Next
+                                </button>
                             </div>
                         )}
                     </div>

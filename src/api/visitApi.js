@@ -15,8 +15,8 @@ export const deleteVisit = async (visitId) => {
     return response.data;
 };
 
-export const getVisitsByDoctor = async (doctorId) => {
-    const response = await api.get(`/Visit/Doctor/${doctorId}`);
+export const getVisitsByDoctor = async (doctorId, pageNumber = 1, pageSize = 10) => {
+    const response = await api.get(`/Visit/Doctor/${doctorId}`, { params: { pageNumber, pageSize } });
     return response.data;
 };
 

@@ -26,7 +26,7 @@ const DashboardPage = () => {
             <div className="dashboard__welcome card card--glass">
                 <div className="dashboard__welcome-content">
                     <h1 className="dashboard__welcome-title">
-                        Welcome back, <span className="dashboard__welcome-name">{doctor?.fullName || 'Doctor'}</span>
+                        Welcome back, <span className="dashboard__welcome-name">Doctor / {doctor?.fullName || 'Doctor'}</span>
                     </h1>
                     <p className="dashboard__welcome-sub">
                         Here's an overview of your clinic management dashboard.
