@@ -155,6 +155,7 @@ export default {
         deleteFailed: 'Failed to delete visit',
         loadFailed: 'Failed to load visits',
         feePrefix: 'Fee:',
+        patient: 'Patient',
     },
     addVisit: {
         title: 'New Visit',

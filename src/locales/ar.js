@@ -155,6 +155,7 @@ export default {
         deleteFailed: 'فشل في حذف الزيارة',
         loadFailed: 'فشل في تحميل الزيارات',
         feePrefix: 'الرسوم:',
+        patient: 'المريض',
     },
     addVisit: {
         title: 'زيارة جديدة',

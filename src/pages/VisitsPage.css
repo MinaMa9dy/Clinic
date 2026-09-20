@@ -66,3 +66,19 @@
 [dir="rtl"] .visit-card__arrow {
     transform: rotate(180deg);
 }
+
+.visit-card__patient {
+    margin-bottom: 6px;
+}
+
+.visit-card__patient-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

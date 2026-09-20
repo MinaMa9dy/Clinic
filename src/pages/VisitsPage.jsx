@@ -92,8 +92,18 @@ const VisitsPage = () => {
                                 <FiCalendar />
                             </div>
                             <div className="visit-card__info">
+                                {visit.patientName && (
+                                    <div className="visit-card__patient">
+                                        <span className="visit-card__patient-name">👤 {visit.patientName}</span>
+                                    </div>
+                                )}
                                 <div className="visit-card__top">
-                                    <span className="visit-card__date">{new Date(visit.visitDate).toLocaleDateString()}</span>
+                                    <span className="visit-card__date">
+                                        {new Date(visit.visitDate).toLocaleString([], {
+                                            year: 'numeric', month: 'short', day: 'numeric',
+                                            hour: '2-digit', minute: '2-digit'
+                                        })}
+                                    </span>
                                     <span className={`badge ${visit.type === 1 ? 'badge--primary' : 'badge--warning'}`}>
                                         {visit.type === 1 ? t('enums.visitType.new') : t('enums.visitType.followUp')}
                                     </span>
