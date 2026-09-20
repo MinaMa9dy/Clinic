@@ -1,27 +1,34 @@
-import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import {
     FiHome,
     FiUsers,
     FiCalendar,
     FiUserCheck,
     FiLogOut,
-    FiMenu,
     FiX,
+    FiGlobe,
 } from 'react-icons/fi';
 import './Sidebar.css';
 
-const navItems = [
-    { path: '/', icon: <FiHome />, label: 'Dashboard' },
-    { path: '/patients', icon: <FiUsers />, label: 'Patients' },
-    { path: '/visits', icon: <FiCalendar />, label: 'Visits' },
-    { path: '/doctors', icon: <FiUserCheck />, label: 'Doctors' },
-];
-
 const Sidebar = ({ isOpen, onToggle }) => {
     const { doctor, logout } = useAuth();
+    const { lang, toggleLang, t } = useLanguage();
     const navigate = useNavigate();
+
+    const isAdmin = doctor?.role === 'Admin';
+
+    const navItems = isAdmin
+        ? [
+            { path: '/doctors', icon: <FiUserCheck />, label: t('nav.doctors') },
+          ]
+        : [
+            { path: '/', icon: <FiHome />, label: t('nav.dashboard') },
+            { path: '/patients', icon: <FiUsers />, label: t('nav.patients') },
+            { path: '/visits', icon: <FiCalendar />, label: t('nav.visits') },
+            { path: '/doctors', icon: <FiUserCheck />, label: t('nav.doctors') },
+          ];
 
     const handleLogout = () => {
         logout();
@@ -44,10 +51,28 @@ const Sidebar = ({ isOpen, onToggle }) => {
                 <div className="sidebar__header">
                     <div className="sidebar__brand">
                         <span className="sidebar__logo">🏥</span>
-                        <h1 className="sidebar__title">MyClinic</h1>
+                        <h1 className="sidebar__title">{t('nav.brand')}</h1>
                     </div>
                     <button className="sidebar__close-mobile" onClick={onToggle} aria-label="Close sidebar">
                         <FiX />
+                    </button>
+                </div>
+
+                {/* Language Switcher pill in Sidebar */}
+                <div className="sidebar__lang-wrapper">
+                    <button
+                        className="sidebar__lang-btn"
+                        onClick={toggleLang}
+                        title={lang === 'en' ? 'التحويل إلى العربية' : 'Switch to English'}
+                        type="button"
+                    >
+                        <FiGlobe className="sidebar__lang-icon" />
+                        <span className="sidebar__lang-current">
+                            {lang === 'en' ? 'English' : 'العربية'}
+                        </span>
+                        <span className="sidebar__lang-badge">
+                            {lang === 'en' ? 'عربي' : 'EN'}
+                        </span>
                     </button>
                 </div>
 
@@ -73,17 +98,23 @@ const Sidebar = ({ isOpen, onToggle }) => {
                     {doctor && (
                         <div className="sidebar__user">
                             <div className="sidebar__avatar">
-                                {doctor.fullName?.charAt(0)?.toUpperCase() || 'D'}
+                                {isAdmin ? '👑' : (doctor.fullName?.charAt(0)?.toUpperCase() || 'D')}
                             </div>
                             <div className="sidebar__user-info">
-                                <span className="sidebar__user-name">Doctor / {doctor.fullName || 'Doctor'}</span>
-                                <span className="sidebar__user-role">Doctor</span>
+                                <span className="sidebar__user-name">
+                                    {isAdmin 
+                                        ? (doctor.fullName || t('nav.adminRole')) 
+                                        : `${t('nav.doctorPrefix')}${doctor.fullName || t('nav.doctorRole')}`}
+                                </span>
+                                <span className="sidebar__user-role">
+                                    {isAdmin ? t('nav.adminRole') : t('nav.doctorRole')}
+                                </span>
                             </div>
                         </div>
                     )}
-                    <button className="sidebar__logout" onClick={handleLogout} title="Logout">
+                    <button className="sidebar__logout" onClick={handleLogout} title={t('nav.logout')}>
                         <FiLogOut />
-                        <span>Logout</span>
+                        <span>{t('nav.logout')}</span>
                     </button>
                 </div>
             </aside>

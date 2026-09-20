@@ -1,23 +1,25 @@
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Link } from 'react-router-dom';
 import { FiUsers, FiCalendar, FiUserCheck, FiActivity, FiPlusCircle, FiSearch } from 'react-icons/fi';
 import './DashboardPage.css';
 
 const DashboardPage = () => {
     const { doctor } = useAuth();
+    const { t } = useLanguage();
 
     const quickActions = [
-        { icon: <FiPlusCircle />, label: 'New Patient', path: '/patients/add', color: 'var(--color-primary)' },
-        { icon: <FiCalendar />, label: 'New Visit', path: '/visits/add', color: 'var(--color-accent)' },
-        { icon: <FiSearch />, label: 'Search Patients', path: '/patients', color: 'var(--color-info)' },
-        { icon: <FiUsers />, label: 'View Doctors', path: '/doctors', color: '#8b5cf6' },
+        { icon: <FiPlusCircle />, label: t('dashboard.newPatient'), path: '/patients/add', color: 'var(--color-primary)' },
+        { icon: <FiCalendar />, label: t('dashboard.newVisit'), path: '/visits/add', color: 'var(--color-accent)' },
+        { icon: <FiSearch />, label: t('dashboard.searchPatients'), path: '/patients', color: 'var(--color-info)' },
+        { icon: <FiUsers />, label: t('dashboard.viewDoctors'), path: '/doctors', color: '#8b5cf6' },
     ];
 
     const statCards = [
-        { icon: <FiUsers />, label: 'Patients', value: '—', color: 'var(--color-primary)', bg: 'var(--color-primary-alpha)' },
-        { icon: <FiCalendar />, label: 'Visits Today', value: '—', color: 'var(--color-accent)', bg: 'rgba(6, 182, 212, 0.12)' },
-        { icon: <FiUserCheck />, label: 'Doctors', value: '—', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.12)' },
-        { icon: <FiActivity />, label: 'Active Cases', value: '—', color: 'var(--color-success)', bg: 'rgba(34, 197, 94, 0.12)' },
+        { icon: <FiUsers />, label: t('dashboard.statPatients'), value: '—', color: 'var(--color-primary)', bg: 'var(--color-primary-alpha)' },
+        { icon: <FiCalendar />, label: t('dashboard.statVisitsToday'), value: '—', color: 'var(--color-accent)', bg: 'rgba(6, 182, 212, 0.12)' },
+        { icon: <FiUserCheck />, label: t('dashboard.statDoctors'), value: '—', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.12)' },
+        { icon: <FiActivity />, label: t('dashboard.statActiveCases'), value: '—', color: 'var(--color-success)', bg: 'rgba(34, 197, 94, 0.12)' },
     ];
 
     return (
@@ -26,10 +28,10 @@ const DashboardPage = () => {
             <div className="dashboard__welcome card card--glass">
                 <div className="dashboard__welcome-content">
                     <h1 className="dashboard__welcome-title">
-                        Welcome back, <span className="dashboard__welcome-name">Doctor / {doctor?.fullName || 'Doctor'}</span>
+                        {t('dashboard.welcomeBack')} <span className="dashboard__welcome-name">{t('nav.doctorPrefix')}{doctor?.fullName || t('nav.doctorRole')}</span>
                     </h1>
                     <p className="dashboard__welcome-sub">
-                        Here's an overview of your clinic management dashboard.
+                        {t('dashboard.welcomeSub')}
                     </p>
                 </div>
                 <div className="dashboard__welcome-art">
@@ -54,7 +56,7 @@ const DashboardPage = () => {
 
             {/* Quick Actions */}
             <div className="page-header">
-                <h2 className="page-header__title" style={{ fontSize: '1.2rem' }}>Quick Actions</h2>
+                <h2 className="page-header__title" style={{ fontSize: '1.2rem' }}>{t('dashboard.quickActions')}</h2>
             </div>
             <div className="grid-4">
                 {quickActions.map((action, i) => (

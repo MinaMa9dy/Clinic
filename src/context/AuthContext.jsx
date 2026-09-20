@@ -7,7 +7,20 @@ export const AuthProvider = ({ children }) => {
     // doctor info derived from local storage
     const [doctor, setDoctor] = useState(() => {
         const saved = localStorage.getItem('doctor');
-        return saved ? JSON.parse(saved) : null;
+        if (!saved) return null;
+        try {
+            const parsed = JSON.parse(saved);
+            if (!parsed.role) {
+                const token = localStorage.getItem('token');
+                if (token) {
+                    const decoded = jwtDecode(token);
+                    parsed.role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || 'Doctor';
+                }
+            }
+            return parsed;
+        } catch {
+            return null;
+        }
     });
 
     const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -32,11 +45,10 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         if (doctor) {
             localStorage.setItem('doctor', JSON.stringify(doctor));
-            setIsAuthenticated(true);
         } else {
             localStorage.removeItem('doctor');
             localStorage.removeItem('token');
-            setIsAuthenticated(false);
+            localStorage.removeItem('refreshToken');
         }
     }, [doctor]);
 
@@ -61,13 +73,18 @@ export const AuthProvider = ({ children }) => {
             role,
             id,
         };
+        localStorage.setItem('doctor', JSON.stringify(doctorData));
         setDoctor(doctorData);
+        setIsAuthenticated(true);
+        return doctorData;
     };
 
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
+        localStorage.removeItem('doctor');
         setDoctor(null);
+        setIsAuthenticated(false);
     };
 
     return (

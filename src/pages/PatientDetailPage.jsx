@@ -5,8 +5,9 @@ import { getVisitsByPatient, deleteVisit } from '../api/visitApi';
 import { getAllergiesByPatientId, addAllergy, deleteAllergy } from '../api/allergyApi';
 import { addBloodPressure, deleteBloodPressure } from '../api/bloodPressureApi';
 import { addBloodGlucose, deleteBloodGlucose } from '../api/bloodGlucoseApi';
+import { useLanguage } from '../context/LanguageContext';
 import { toast } from 'react-toastify';
-import { GenderOptions, BloodTypeOptions, GenderOptionsList, BloodTypeOptionsList, MedicalVisitOptions, BloodGlucoseOptions, BloodGlucoseOptionsList } from '../utils/enums';
+import { GenderOptionsList, BloodTypeOptionsList, BloodGlucoseOptionsList } from '../utils/enums';
 import { FiArrowLeft, FiUser, FiCalendar, FiPlus, FiTrash2, FiActivity, FiDroplet, FiHeart, FiAlertCircle, FiX, FiClipboard, FiEdit2, FiSave } from 'react-icons/fi';
 import ConfirmModal from '../components/ConfirmModal';
 import './PatientDetailPage.css';
@@ -14,6 +15,7 @@ import './PatientDetailPage.css';
 const PatientDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const [patient, setPatient] = useState(null);
     const [visits, setVisits] = useState([]);
     const [allergies, setAllergies] = useState([]);
@@ -89,7 +91,7 @@ const PatientDetailPage = () => {
             }
             if (allergiesRes.isSuccess) setAllergies(allergiesRes.data || []);
         } catch (err) {
-            toast.error('Failed to load patient data');
+            toast.error(t('patients.loadFailed'));
         } finally {
             setLoading(false);
         }
@@ -102,9 +104,9 @@ const PatientDetailPage = () => {
                 setVisits(result.data || []);
                 setHasMoreVisits((result.data || []).length === VISIT_PAGE_SIZE);
                 setVisitPage(pageNum);
-            } else toast.error(result.message || 'Failed to load visits');
+            } else toast.error(result.message || t('visits.loadFailed'));
         } catch {
-            toast.error('Failed to load visits');
+            toast.error(t('visits.loadFailed'));
         }
     };
 
@@ -127,13 +129,13 @@ const PatientDetailPage = () => {
             };
             const result = await updatePatient(dto);
             if (result.isSuccess) {
-                toast.success('Medical history updated');
+                toast.success(t('patientDetail.historySaved'));
                 setPatient({ ...patient, medicalHistory: history });
             } else {
-                toast.error(result.message || 'Failed to update history');
+                toast.error(result.message || t('patientDetail.historyFailed'));
             }
         } catch (error) {
-            toast.error('An error occurred while saving history');
+            toast.error(t('patientDetail.historyFailed'));
         } finally {
             setIsSavingHistory(false);
         }
@@ -154,14 +156,14 @@ const PatientDetailPage = () => {
             };
             const result = await updatePatient(dto);
             if (result.isSuccess) {
-                toast.success('Patient details updated');
+                toast.success(t('patients.detailsSaved'));
                 setPatient({ ...patient, ...dto });
                 setIsEditingPatient(false);
             } else {
-                toast.error(result.message || 'Failed to update patient details');
+                toast.error(result.message || t('patients.detailsSaved'));
             }
         } catch (error) {
-            toast.error('Failed to update patient details');
+            toast.error(t('patients.detailsSaved'));
         }
     };
 
@@ -170,12 +172,12 @@ const PatientDetailPage = () => {
         try {
             const result = await addAllergy(allergyForm.name, allergyForm.description, Number(id));
             if (result.isSuccess) {
-                toast.success('Allergy added');
+                toast.success(t('common.save'));
                 setAllergyForm({ name: '', description: '' });
                 setShowAllergyForm(false);
                 loadData();
             } else toast.error(result.message);
-        } catch { toast.error('Failed to add allergy'); }
+        } catch { toast.error(t('common.save')); }
     };
 
     const handleAddBP = async (e) => {
@@ -184,12 +186,12 @@ const PatientDetailPage = () => {
             const dto = { patientId: Number(id), systolic: Number(bpForm.systolic), diastolic: Number(bpForm.diastolic), pulse: Number(bpForm.pulse) };
             const result = await addBloodPressure(dto);
             if (result.isSuccess) {
-                toast.success('Blood pressure recorded');
+                toast.success(t('common.save'));
                 setBpForm({ systolic: '', diastolic: '', pulse: '' });
                 setShowBpForm(false);
                 loadData();
             } else toast.error(result.message);
-        } catch { toast.error('Failed to add blood pressure'); }
+        } catch { toast.error(t('common.save')); }
     };
 
     const handleAddBG = async (e) => {
@@ -198,25 +200,25 @@ const PatientDetailPage = () => {
             const dto = { patientId: Number(id), type: Number(bgForm.type), result: bgForm.result };
             const result = await addBloodGlucose(dto);
             if (result.isSuccess) {
-                toast.success('Blood glucose recorded');
+                toast.success(t('common.save'));
                 setBgForm({ type: 1, result: '' });
                 setShowBgForm(false);
                 loadData();
             } else toast.error(result.message);
-        } catch { toast.error('Failed to add blood glucose'); }
+        } catch { toast.error(t('common.save')); }
     };
 
     const handleDeleteBP = (bpId) => {
         setConfirmModal({
             isOpen: true,
-            title: 'Delete BP Record',
-            message: 'Are you sure you want to remove this blood pressure reading?',
+            title: t('common.delete'),
+            message: t('common.undoneAction'),
             onConfirm: async () => {
                 try {
                     await deleteBloodPressure(bpId);
-                    toast.success('Blood pressure deleted');
+                    toast.success(t('common.delete'));
                     loadData();
-                } catch { toast.error('Failed to delete'); }
+                } catch { toast.error(t('common.delete')); }
             }
         });
     };
@@ -224,14 +226,14 @@ const PatientDetailPage = () => {
     const handleDeleteBG = (bgId) => {
         setConfirmModal({
             isOpen: true,
-            title: 'Delete Glucose Record',
-            message: 'Are you sure you want to remove this blood glucose reading?',
+            title: t('common.delete'),
+            message: t('common.undoneAction'),
             onConfirm: async () => {
                 try {
                     await deleteBloodGlucose(bgId);
-                    toast.success('Blood glucose deleted');
+                    toast.success(t('common.delete'));
                     loadData();
-                } catch { toast.error('Failed to delete'); }
+                } catch { toast.error(t('common.delete')); }
             }
         });
     };
@@ -239,19 +241,19 @@ const PatientDetailPage = () => {
     const handleDeleteVisit = (visitId) => {
         setConfirmModal({
             isOpen: true,
-            title: 'Delete Visit',
-            message: 'Are you sure you want to permanently delete this medical visit record?',
+            title: t('patientDetail.deleteVisitTitle'),
+            message: t('patientDetail.deleteVisitConfirm'),
             onConfirm: async () => {
                 try {
                     const result = await deleteVisit(visitId);
                     if (result.isSuccess) {
-                        toast.success('Visit deleted successfully');
+                        toast.success(t('visits.deleteSuccess'));
                         loadData();
                     } else {
-                        toast.error(result.message || 'Failed to delete visit');
+                        toast.error(result.message || t('visits.deleteFailed'));
                     }
                 } catch {
-                    toast.error('An error occurred while deleting the visit');
+                    toast.error(t('visits.deleteFailed'));
                 }
             }
         });
@@ -260,16 +262,16 @@ const PatientDetailPage = () => {
     const handleDeleteAllergy = (allergyId) => {
         setConfirmModal({
             isOpen: true,
-            title: 'Delete Allergy',
-            message: 'Are you sure you want to remove this allergy record?',
+            title: t('patientDetail.deleteAllergyTitle'),
+            message: t('patientDetail.deleteAllergyConfirm'),
             onConfirm: async () => {
                 try {
                     const result = await deleteAllergy(allergyId);
                     if (result.isSuccess) {
-                        toast.success('Allergy removed');
+                        toast.success(t('common.remove'));
                         loadData();
                     } else toast.error(result.message);
-                } catch { toast.error('Failed to remove allergy'); }
+                } catch { toast.error(t('common.remove')); }
             }
         });
     };
@@ -277,58 +279,76 @@ const PatientDetailPage = () => {
     const handleDeletePatient = () => {
         setConfirmModal({
             isOpen: true,
-            title: 'Delete Patient Record',
-            message: `Are you sure you want to permanently delete patient "${patient.fullName}"? This action cannot be undone and will remove all medical history, visits, and vital records.`,
+            title: t('patientDetail.deletePatient'),
+            message: t('patientDetail.deletePatientConfirm', { name: patient.fullName }),
             onConfirm: async () => {
                 try {
                     const result = await deletePatient(id);
                     if (result.isSuccess) {
-                        toast.success('Patient record deleted successfully');
+                        toast.success(t('patients.deleteSuccess'));
                         navigate('/patients');
                     } else {
-                        toast.error(result.message || 'Failed to delete patient');
+                        toast.error(result.message || t('patients.deleteFailed'));
                     }
                 } catch {
-                    toast.error('An error occurred while deleting the patient record');
+                    toast.error(t('patients.deleteFailed'));
                 }
             }
         });
     };
 
+    const getGenderText = (gender) => {
+        if (gender === 1) return t('enums.gender.male');
+        if (gender === 2) return t('enums.gender.female');
+        return '—';
+    };
+
+    const getBloodTypeText = (bt) => {
+        const map = { 1: 'A+', 2: 'A-', 3: 'B+', 4: 'B-', 5: 'AB+', 6: 'AB-', 7: 'O+', 8: 'O-' };
+        return map[bt] || '—';
+    };
+
+    const getGlucoseTypeText = (type) => {
+        if (type === 1) return t('enums.glucose.fasting');
+        if (type === 2) return t('enums.glucose.postprandial');
+        if (type === 3) return t('enums.glucose.random');
+        return '';
+    };
+
     if (loading) return <div className="loading"><div className="spinner"></div></div>;
-    if (!patient) return <div className="empty-state"><h3 className="empty-state__title">Patient not found</h3></div>;
+    if (!patient) return <div className="empty-state"><h3 className="empty-state__title">{t('patients.noPatientsFound')}</h3></div>;
 
     const tabs = [
-        { key: 'overview', label: 'Overview', icon: <FiUser /> },
-        { key: 'visits', label: 'Visits', icon: <FiCalendar /> },
-        { key: 'vitals', label: 'Vitals', icon: <FiActivity /> },
-        { key: 'allergies', label: 'Allergies', icon: <FiAlertCircle /> },
+        { key: 'overview', label: t('patientDetail.tabOverview'), icon: <FiUser /> },
+        { key: 'visits', label: t('patientDetail.tabVisits'), icon: <FiCalendar /> },
+        { key: 'vitals', label: t('patientDetail.tabVitals'), icon: <FiActivity /> },
+        { key: 'allergies', label: t('patientDetail.tabAllergies'), icon: <FiAlertCircle /> },
     ];
 
     return (
         <div className="patient-detail fade-in">
             <div className="page-header" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                 <button className="btn btn--secondary btn--sm" onClick={() => navigate('/patients')}>
-                    <FiArrowLeft /> Back
+                    <FiArrowLeft className="icon-flip-rtl" /> {t('common.back')}
                 </button>
                 <div>
                     <h1 className="page-header__title">{patient.fullName}</h1>
-                    <p className="page-header__subtitle">Patient Profile</p>
+                    <p className="page-header__subtitle">{t('patientDetail.profileSubtitle')}</p>
                 </div>
-                <div style={{ marginLeft: 'auto' }}>
+                <div style={{ marginInlineStart: 'auto' }}>
                     <button className="btn btn--danger btn--sm" onClick={handleDeletePatient}>
-                        <FiTrash2 /> Delete Patient
+                        <FiTrash2 /> {t('patientDetail.deletePatient')}
                     </button>
                 </div>
             </div>
 
             <div className="card patient-profile" style={{ position: 'relative' }}>
-                <div style={{ position: 'absolute', top: 16, right: 16 }}>
+                <div style={{ position: 'absolute', top: 16, insetInlineEnd: 16 }}>
                     <button
                         className={`btn btn--sm ${isEditingPatient ? 'btn--secondary' : 'btn--primary'}`}
                         onClick={() => setIsEditingPatient(!isEditingPatient)}
                     >
-                        {isEditingPatient ? <><FiX /> Cancel</> : <><FiEdit2 /> Edit</>}
+                        {isEditingPatient ? <><FiX /> {t('common.cancel')}</> : <><FiEdit2 /> {t('common.edit')}</>}
                     </button>
                 </div>
 
@@ -340,58 +360,62 @@ const PatientDetailPage = () => {
                     <form onSubmit={handleUpdatePatientDetails} className="patient-profile__form" style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
                         <div className="grid-2">
                             <div className="form-group">
-                                <label className="form-label">Full Name</label>
+                                <label className="form-label">{t('auth.fullName')}</label>
                                 <input type="text" className="form-input" value={patientForm.fullName} onChange={e => setPatientForm({ ...patientForm, fullName: e.target.value })} required />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Phone</label>
+                                <label className="form-label">{t('patientDetail.phone')}</label>
                                 <input type="text" className="form-input" value={patientForm.phoneNumber} onChange={e => setPatientForm({ ...patientForm, phoneNumber: e.target.value })} required />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Gender</label>
+                                <label className="form-label">{t('patientDetail.gender')}</label>
                                 <select className="form-select" value={patientForm.gender} onChange={e => setPatientForm({ ...patientForm, gender: Number(e.target.value) })}>
-                                    {GenderOptionsList.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                    {GenderOptionsList.map(opt => (
+                                        <option key={opt.value} value={opt.value}>
+                                            {opt.value === 1 ? t('enums.gender.male') : t('enums.gender.female')}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Blood Type</label>
+                                <label className="form-label">{t('patientDetail.bloodType')}</label>
                                 <select className="form-select" value={patientForm.bloodType} onChange={e => setPatientForm({ ...patientForm, bloodType: Number(e.target.value) })}>
                                     {BloodTypeOptionsList.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Date of Birth</label>
+                                <label className="form-label">{t('patientDetail.dateOfBirth')}</label>
                                 <input type="date" className="form-input" value={patientForm.dateOfBirth} onChange={e => setPatientForm({ ...patientForm, dateOfBirth: e.target.value })} required />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Address</label>
+                                <label className="form-label">{t('patientDetail.address')}</label>
                                 <input type="text" className="form-input" value={patientForm.address} onChange={e => setPatientForm({ ...patientForm, address: e.target.value })} required />
                             </div>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-                            <button type="submit" className="btn btn--primary"><FiSave /> Save Details</button>
+                            <button type="submit" className="btn btn--primary"><FiSave /> {t('patientDetail.saveDetails')}</button>
                         </div>
                     </form>
                 ) : (
                     <div className="patient-profile__grid">
                         <div className="patient-profile__item">
-                            <span className="patient-profile__label">Gender</span>
-                            <span className="patient-profile__value">{GenderOptions[patient.gender] || '—'}</span>
+                            <span className="patient-profile__label">{t('patientDetail.gender')}</span>
+                            <span className="patient-profile__value">{getGenderText(patient.gender)}</span>
                         </div>
                         <div className="patient-profile__item">
-                            <span className="patient-profile__label">Blood Type</span>
-                            <span className="patient-profile__value badge badge--danger">{BloodTypeOptions[patient.bloodType] || '—'}</span>
+                            <span className="patient-profile__label">{t('patientDetail.bloodType')}</span>
+                            <span className="patient-profile__value badge badge--danger">{getBloodTypeText(patient.bloodType)}</span>
                         </div>
                         <div className="patient-profile__item">
-                            <span className="patient-profile__label">Phone</span>
+                            <span className="patient-profile__label">{t('patientDetail.phone')}</span>
                             <span className="patient-profile__value">{patient.phoneNumber || '—'}</span>
                         </div>
                         <div className="patient-profile__item">
-                            <span className="patient-profile__label">Address</span>
+                            <span className="patient-profile__label">{t('patientDetail.address')}</span>
                             <span className="patient-profile__value">{patient.address || '—'}</span>
                         </div>
                         <div className="patient-profile__item">
-                            <span className="patient-profile__label">Date of Birth</span>
+                            <span className="patient-profile__label">{t('patientDetail.dateOfBirth')}</span>
                             <span className="patient-profile__value">{patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : '—'}</span>
                         </div>
                     </div>
@@ -417,22 +441,22 @@ const PatientDetailPage = () => {
                 {activeTab === 'overview' && (
                     <div className="grid-3">
                         <div className="card">
-                            <h3 style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: 8 }}>Total Visits</h3>
+                            <h3 style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: 8 }}>{t('patientDetail.totalVisits')}</h3>
                             <p style={{ fontSize: '1.6rem', fontWeight: 800 }}>{visits.length}</p>
                         </div>
                         <div className="card">
-                            <h3 style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: 8 }}>Allergies</h3>
+                            <h3 style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: 8 }}>{t('patientDetail.allergiesCount')}</h3>
                             <p style={{ fontSize: '1.6rem', fontWeight: 800 }}>{allergies.length}</p>
                         </div>
                         <div className="card">
-                            <h3 style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: 8 }}>BP Records</h3>
+                            <h3 style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: 8 }}>{t('patientDetail.bpRecordsCount')}</h3>
                             <p style={{ fontSize: '1.6rem', fontWeight: 800 }}>{patient.bloodPressures?.length || 0}</p>
                         </div>
 
                         <div className="card" style={{ gridColumn: 'span 3' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                                 <h3 style={{ fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <FiClipboard color="var(--color-primary)" /> Medical History
+                                    <FiClipboard color="var(--color-primary)" /> {t('patientDetail.medicalHistory')}
                                 </h3>
                                 {history !== (patient.medicalHistory || '') && (
                                     <button
@@ -440,14 +464,14 @@ const PatientDetailPage = () => {
                                         onClick={handleSaveHistory}
                                         disabled={isSavingHistory}
                                     >
-                                        {isSavingHistory ? 'Saving...' : 'Save Changes'}
+                                        {isSavingHistory ? t('common.saving') : t('patientDetail.saveChanges')}
                                     </button>
                                 )}
                             </div>
                             <textarea
                                 className="form-textarea"
                                 style={{ minHeight: 150, background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}
-                                placeholder="Enter patient's medical history, past surgeries, chronic conditions, etc..."
+                                placeholder={t('patientDetail.historyPlaceholder')}
                                 value={history}
                                 onChange={(e) => setHistory(e.target.value)}
                             />
@@ -459,19 +483,19 @@ const PatientDetailPage = () => {
                 {activeTab === 'visits' && (
                     <div>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                            <Link to="/visits/add" className="btn btn--primary btn--sm"><FiPlus /> New Visit</Link>
+                            <Link to="/visits/add" className="btn btn--primary btn--sm"><FiPlus /> {t('visits.newVisit')}</Link>
                         </div>
                         {visits.length === 0 ? (
-                            <div className="empty-state"><p className="empty-state__text">No visits yet</p></div>
+                            <div className="empty-state"><p className="empty-state__text">{t('patientDetail.noVisitsYet')}</p></div>
                         ) : (
                             <div className="table-wrapper">
                                 <table className="table">
                                     <thead>
                                         <tr>
-                                            <th>Date</th>
-                                            <th>Type</th>
-                                            <th>Fee</th>
-                                            <th>Notes</th>
+                                            <th>{t('common.date')}</th>
+                                            <th>{t('common.type')}</th>
+                                            <th>{t('common.fee')}</th>
+                                            <th>{t('common.notes')}</th>
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -479,16 +503,20 @@ const PatientDetailPage = () => {
                                         {visits.map((v) => (
                                             <tr key={v.id}>
                                                 <td>{new Date(v.visitDate).toLocaleDateString()}</td>
-                                                <td><span className={`badge ${v.type === 1 ? 'badge--primary' : 'badge--warning'}`}>{MedicalVisitOptions[v.type]}</span></td>
+                                                <td>
+                                                    <span className={`badge ${v.type === 1 ? 'badge--primary' : 'badge--warning'}`}>
+                                                        {v.type === 1 ? t('enums.visitType.new') : t('enums.visitType.followUp')}
+                                                    </span>
+                                                </td>
                                                 <td>${v.fee}</td>
                                                 <td>{v.notes || '—'}</td>
                                                 <td>
                                                     <div style={{ display: 'flex', gap: 8 }}>
-                                                        <Link to={`/visits/${v.id}`} className="btn btn--secondary btn--sm">View</Link>
+                                                        <Link to={`/visits/${v.id}`} className="btn btn--secondary btn--sm">{t('common.view')}</Link>
                                                         <button
                                                             onClick={() => handleDeleteVisit(v.id)}
                                                             className="btn btn--danger btn--sm"
-                                                            title="Delete Visit"
+                                                            title={t('common.delete')}
                                                         >
                                                             <FiTrash2 size={14} />
                                                         </button>
@@ -508,17 +536,17 @@ const PatientDetailPage = () => {
                                     onClick={() => handleVisitPageChange(visitPage - 1)}
                                     disabled={visitPage === 1}
                                 >
-                                    Previous
+                                    {t('common.previous')}
                                 </button>
                                 <span style={{ display: 'flex', alignItems: 'center', fontWeight: 600, fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
-                                    Page {visitPage}
+                                    {t('common.page')} {visitPage}
                                 </span>
                                 <button
                                     className="btn btn--secondary btn--sm"
                                     onClick={() => handleVisitPageChange(visitPage + 1)}
                                     disabled={!hasMoreVisits}
                                 >
-                                    Next
+                                    {t('common.next')}
                                 </button>
                             </div>
                         )}
@@ -531,24 +559,24 @@ const PatientDetailPage = () => {
                         {/* Blood Pressure */}
                         <div className="card">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                                <h3 style={{ fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}><FiHeart color="var(--color-danger)" /> Blood Pressure</h3>
+                                <h3 style={{ fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}><FiHeart color="var(--color-danger)" /> {t('patientDetail.bloodPressure')}</h3>
                                 <button className="btn btn--primary btn--sm" onClick={() => setShowBpForm(!showBpForm)}><FiPlus /></button>
                             </div>
                             {showBpForm && (
                                 <form onSubmit={handleAddBP} style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                    <input type="number" placeholder="Systolic" value={bpForm.systolic} onChange={(e) => setBpForm({ ...bpForm, systolic: e.target.value })} className="form-input" style={{ flex: 1, minWidth: 80 }} required />
-                                    <input type="number" placeholder="Diastolic" value={bpForm.diastolic} onChange={(e) => setBpForm({ ...bpForm, diastolic: e.target.value })} className="form-input" style={{ flex: 1, minWidth: 80 }} required />
-                                    <input type="number" placeholder="Pulse" value={bpForm.pulse} onChange={(e) => setBpForm({ ...bpForm, pulse: e.target.value })} className="form-input" style={{ flex: 1, minWidth: 80 }} required />
-                                    <button type="submit" className="btn btn--primary btn--sm">Add</button>
+                                    <input type="number" placeholder={t('patientDetail.systolic')} value={bpForm.systolic} onChange={(e) => setBpForm({ ...bpForm, systolic: e.target.value })} className="form-input" style={{ flex: 1, minWidth: 80 }} required />
+                                    <input type="number" placeholder={t('patientDetail.diastolic')} value={bpForm.diastolic} onChange={(e) => setBpForm({ ...bpForm, diastolic: e.target.value })} className="form-input" style={{ flex: 1, minWidth: 80 }} required />
+                                    <input type="number" placeholder={t('patientDetail.pulse')} value={bpForm.pulse} onChange={(e) => setBpForm({ ...bpForm, pulse: e.target.value })} className="form-input" style={{ flex: 1, minWidth: 80 }} required />
+                                    <button type="submit" className="btn btn--primary btn--sm">{t('common.add')}</button>
                                 </form>
                             )}
                             {(patient.bloodPressures?.length || 0) === 0 ? (
-                                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>No records</p>
+                                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{t('common.noRecords')}</p>
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                     {patient.bloodPressures?.map((bp) => (
                                         <div key={bp.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, padding: '8px 12px', background: 'var(--color-hover)', borderRadius: 10, fontSize: '0.85rem' }}>
-                                            <span><strong>{bp.systolic}/{bp.diastolic}</strong> mmHg · Pulse: {bp.pulse}</span>
+                                            <span><strong>{bp.systolic}/{bp.diastolic}</strong> mmHg · {t('patientDetail.pulse')}: {bp.pulse}</span>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                                 <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>{new Date(bp.recordedAt).toLocaleDateString()}</span>
                                                 <button onClick={() => handleDeleteBP(bp.id)} className="btn btn--danger btn--sm" style={{ padding: '4px 8px' }}><FiTrash2 size={14} /></button>
@@ -562,27 +590,27 @@ const PatientDetailPage = () => {
                         {/* Blood Glucose */}
                         <div className="card">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                                <h3 style={{ fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}><FiDroplet color="var(--color-accent)" /> Blood Glucose</h3>
+                                <h3 style={{ fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}><FiDroplet color="var(--color-accent)" /> {t('patientDetail.bloodGlucose')}</h3>
                                 <button className="btn btn--primary btn--sm" onClick={() => setShowBgForm(!showBgForm)}><FiPlus /></button>
                             </div>
                             {showBgForm && (
                                 <form onSubmit={handleAddBG} style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                                     <select value={bgForm.type} onChange={(e) => setBgForm({ ...bgForm, type: e.target.value })} className="form-select" style={{ flex: 1, minWidth: 120 }}>
                                         {BloodGlucoseOptionsList.map((opt) => (
-                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                            <option key={opt.value} value={opt.value}>{getGlucoseTypeText(opt.value)}</option>
                                         ))}
                                     </select>
-                                    <input type="text" placeholder="Result (mg/dL)" value={bgForm.result} onChange={(e) => setBgForm({ ...bgForm, result: e.target.value })} className="form-input" style={{ flex: 1, minWidth: 100 }} required />
-                                    <button type="submit" className="btn btn--primary btn--sm">Add</button>
+                                    <input type="text" placeholder={t('patientDetail.resultMgDl')} value={bgForm.result} onChange={(e) => setBgForm({ ...bgForm, result: e.target.value })} className="form-input" style={{ flex: 1, minWidth: 100 }} required />
+                                    <button type="submit" className="btn btn--primary btn--sm">{t('common.add')}</button>
                                 </form>
                             )}
                             {(patient.bloodGlucoses?.length || 0) === 0 ? (
-                                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>No records</p>
+                                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{t('common.noRecords')}</p>
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                     {patient.bloodGlucoses?.map((bg) => (
                                         <div key={bg.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, padding: '8px 12px', background: 'var(--color-hover)', borderRadius: 10, fontSize: '0.85rem' }}>
-                                            <span><strong>{bg.result}</strong> mg/dL · {BloodGlucoseOptions[bg.type]}</span>
+                                            <span><strong>{bg.result}</strong> mg/dL · {getGlucoseTypeText(bg.type)}</span>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                                 <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>{new Date(bg.recordedAt).toLocaleDateString()}</span>
                                                 <button onClick={() => handleDeleteBG(bg.id)} className="btn btn--danger btn--sm" style={{ padding: '4px 8px' }}><FiTrash2 size={14} /></button>
@@ -599,18 +627,18 @@ const PatientDetailPage = () => {
                 {activeTab === 'allergies' && (
                     <div className="card">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                            <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Allergies</h3>
-                            <button className="btn btn--primary btn--sm" onClick={() => setShowAllergyForm(!showAllergyForm)}><FiPlus /> Add</button>
+                            <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>{t('patientDetail.allergiesTitle')}</h3>
+                            <button className="btn btn--primary btn--sm" onClick={() => setShowAllergyForm(!showAllergyForm)}><FiPlus /> {t('common.add')}</button>
                         </div>
                         {showAllergyForm && (
                             <form onSubmit={handleAddAllergy} style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                <input type="text" placeholder="Allergy name" value={allergyForm.name} onChange={(e) => setAllergyForm({ ...allergyForm, name: e.target.value })} className="form-input" style={{ flex: 1, minWidth: 150 }} required />
-                                <input type="text" placeholder="Description (optional)" value={allergyForm.description} onChange={(e) => setAllergyForm({ ...allergyForm, description: e.target.value })} className="form-input" style={{ flex: 1, minWidth: 150 }} />
-                                <button type="submit" className="btn btn--primary btn--sm">Save</button>
+                                <input type="text" placeholder={t('patientDetail.allergyNamePlaceholder')} value={allergyForm.name} onChange={(e) => setAllergyForm({ ...allergyForm, name: e.target.value })} className="form-input" style={{ flex: 1, minWidth: 150 }} required />
+                                <input type="text" placeholder={t('patientDetail.allergyDescPlaceholder')} value={allergyForm.description} onChange={(e) => setAllergyForm({ ...allergyForm, description: e.target.value })} className="form-input" style={{ flex: 1, minWidth: 150 }} />
+                                <button type="submit" className="btn btn--primary btn--sm">{t('common.save')}</button>
                             </form>
                         )}
                         {allergies.length === 0 ? (
-                            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>No allergies recorded</p>
+                            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{t('patientDetail.noAllergies')}</p>
                         ) : (
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                                 {allergies.map((a) => (
@@ -622,7 +650,7 @@ const PatientDetailPage = () => {
                                         <button
                                             onClick={() => handleDeleteAllergy(a.id)}
                                             style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', padding: 2, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.1)' }}
-                                            title="Remove Allergy"
+                                            title={t('common.remove')}
                                         >
                                             <FiX size={14} />
                                         </button>

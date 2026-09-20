@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addPatient } from '../api/patientApi';
+import { useLanguage } from '../context/LanguageContext';
 import { toast } from 'react-toastify';
 import { GenderOptionsList, BloodTypeOptionsList } from '../utils/enums';
 import { FiSave, FiArrowLeft } from 'react-icons/fi';
 
 const AddPatientPage = () => {
+    const { t } = useLanguage();
     const [form, setForm] = useState({
         fullName: '',
         dateOfBirth: '',
@@ -33,13 +35,13 @@ const AddPatientPage = () => {
             };
             const result = await addPatient(dto);
             if (result.isSuccess) {
-                toast.success('Patient added successfully!');
+                toast.success(t('addPatient.success'));
                 navigate('/patients');
             } else {
-                toast.error(result.message || 'Failed to add patient');
+                toast.error(result.message || t('addPatient.failed'));
             }
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to add patient');
+            toast.error(err.response?.data?.message || t('addPatient.failed'));
         } finally {
             setLoading(false);
         }
@@ -49,11 +51,11 @@ const AddPatientPage = () => {
         <div className="fade-in">
             <div className="page-header" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <button className="btn btn--secondary btn--sm" onClick={() => navigate('/patients')}>
-                    <FiArrowLeft /> Back
+                    <FiArrowLeft className="icon-flip-rtl" /> {t('common.back')}
                 </button>
                 <div>
-                    <h1 className="page-header__title">Add Patient</h1>
-                    <p className="page-header__subtitle">Register a new patient in the system</p>
+                    <h1 className="page-header__title">{t('addPatient.title')}</h1>
+                    <p className="page-header__subtitle">{t('addPatient.subtitle')}</p>
                 </div>
             </div>
 
@@ -61,27 +63,29 @@ const AddPatientPage = () => {
                 <form onSubmit={handleSubmit}>
                     <div className="grid-2">
                         <div className="form-group">
-                            <label className="form-label">Full Name *</label>
-                            <input type="text" name="fullName" value={form.fullName} onChange={handleChange} className="form-input" placeholder="Patient full name" required />
+                            <label className="form-label">{t('addPatient.fullNameLabel')}</label>
+                            <input type="text" name="fullName" value={form.fullName} onChange={handleChange} className="form-input" placeholder={t('addPatient.fullNamePlaceholder')} required />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Phone Number *</label>
-                            <input type="tel" name="phoneNumber" value={form.phoneNumber} onChange={handleChange} className="form-input" placeholder="+20 1XX XXX XXXX" required />
+                            <label className="form-label">{t('addPatient.phoneLabel')}</label>
+                            <input type="tel" name="phoneNumber" value={form.phoneNumber} onChange={handleChange} className="form-input" placeholder={t('addPatient.phonePlaceholder')} required />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Date of Birth *</label>
+                            <label className="form-label">{t('addPatient.dobLabel')}</label>
                             <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} className="form-input" required />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Gender *</label>
+                            <label className="form-label">{t('addPatient.genderLabel')}</label>
                             <select name="gender" value={form.gender} onChange={handleChange} className="form-select">
                                 {GenderOptionsList.map((opt) => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.value === 1 ? t('enums.gender.male') : t('enums.gender.female')}
+                                    </option>
                                 ))}
                             </select>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Blood Type *</label>
+                            <label className="form-label">{t('addPatient.bloodTypeLabel')}</label>
                             <select name="bloodType" value={form.bloodType} onChange={handleChange} className="form-select">
                                 {BloodTypeOptionsList.map((opt) => (
                                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -89,17 +93,17 @@ const AddPatientPage = () => {
                             </select>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Address *</label>
-                            <input type="text" name="address" value={form.address} onChange={handleChange} className="form-input" placeholder="Patient address" required />
+                            <label className="form-label">{t('addPatient.addressLabel')}</label>
+                            <input type="text" name="address" value={form.address} onChange={handleChange} className="form-input" placeholder={t('addPatient.addressPlaceholder')} required />
                         </div>
                     </div>
 
                     <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
                         <button type="submit" className="btn btn--primary btn--lg" disabled={loading}>
-                            {loading ? <span className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }}></span> : <><FiSave /> Save Patient</>}
+                            {loading ? <span className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }}></span> : <><FiSave /> {t('addPatient.savePatient')}</>}
                         </button>
                         <button type="button" className="btn btn--secondary btn--lg" onClick={() => navigate('/patients')}>
-                            Cancel
+                            {t('common.cancel')}
                         </button>
                     </div>
                 </form>

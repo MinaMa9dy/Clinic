@@ -1,14 +1,31 @@
 import React from 'react';
 import { FiAlertTriangle, FiX } from 'react-icons/fi';
+import { useLanguage } from '../context/LanguageContext';
 import './ConfirmModal.css';
 
-const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = "Delete", cancelText = "Cancel", type = "danger" }) => {
+const ConfirmModal = ({
+    isOpen,
+    onClose,
+    onConfirm,
+    title,
+    message,
+    confirmText,
+    cancelText,
+    type = "danger"
+}) => {
+    const { t } = useLanguage();
+
     if (!isOpen) return null;
+
+    const finalConfirmText = confirmText || t('common.delete');
+    const finalCancelText = cancelText || t('common.cancel');
+    const finalTitle = title || t('common.areYouSure');
+    const finalMessage = message || t('common.undoneAction');
 
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="confirm-modal card fade-in scale-in" onClick={(e) => e.stopPropagation()}>
-                <button className="confirm-modal__close" onClick={onClose}>
+                <button className="confirm-modal__close" onClick={onClose} aria-label={t('common.close')}>
                     <FiX />
                 </button>
 
@@ -17,12 +34,12 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText 
                         <FiAlertTriangle />
                     </div>
 
-                    <h3 className="confirm-modal__title">{title || "Are you sure?"}</h3>
-                    <p className="confirm-modal__message">{message || "This action cannot be undone."}</p>
+                    <h3 className="confirm-modal__title">{finalTitle}</h3>
+                    <p className="confirm-modal__message">{finalMessage}</p>
 
                     <div className="confirm-modal__actions">
                         <button className="btn btn--secondary" onClick={onClose}>
-                            {cancelText}
+                            {finalCancelText}
                         </button>
                         <button
                             className={`btn ${type === 'danger' ? 'btn--danger' : 'btn--primary'}`}
@@ -31,7 +48,7 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText 
                                 onClose();
                             }}
                         >
-                            {confirmText}
+                            {finalConfirmText}
                         </button>
                     </div>
                 </div>

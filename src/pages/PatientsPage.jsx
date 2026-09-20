@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { searchPatients, deletePatient } from '../api/patientApi';
+import { useLanguage } from '../context/LanguageContext';
 import { toast } from 'react-toastify';
-import { GenderOptions, BloodTypeOptions } from '../utils/enums';
 import { FiSearch, FiPlus, FiUser, FiPhone, FiChevronRight, FiTrash2 } from 'react-icons/fi';
 import ConfirmModal from '../components/ConfirmModal';
 import './PatientsPage.css';
 
 const PatientsPage = () => {
+    const { t } = useLanguage();
     const [patients, setPatients] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchParams, setSearchParams] = useSearchParams();
@@ -30,10 +31,10 @@ const PatientsPage = () => {
                 setPatients(result.data || []);
                 setHasMore((result.data || []).length === PAGE_SIZE);
             } else {
-                toast.error(result.message || 'Failed to load patients');
+                toast.error(result.message || t('patients.loadFailed'));
             }
         } catch (err) {
-            toast.error('Failed to load patients');
+            toast.error(t('patients.loadFailed'));
         } finally {
             setLoading(false);
         }
@@ -70,27 +71,38 @@ const PatientsPage = () => {
         try {
             const result = await deletePatient(confirmModal.patientId);
             if (result.isSuccess) {
-                toast.success('Patient deleted successfully');
+                toast.success(t('patients.deleteSuccess'));
                 fetchPatients(query, page);
             } else {
-                toast.error(result.message || 'Failed to delete patient');
+                toast.error(result.message || t('patients.deleteFailed'));
             }
         } catch (error) {
-            toast.error('An error occurred while deleting the patient');
+            toast.error(t('patients.deleteFailed'));
         } finally {
             setConfirmModal({ ...confirmModal, isOpen: false });
         }
+    };
+
+    const getGenderLabel = (gender) => {
+        if (gender === 1) return t('enums.gender.male');
+        if (gender === 2) return t('enums.gender.female');
+        return '—';
+    };
+
+    const getBloodTypeLabel = (bloodType) => {
+        const map = { 1: 'A+', 2: 'A-', 3: 'B+', 4: 'B-', 5: 'AB+', 6: 'AB-', 7: 'O+', 8: 'O-' };
+        return map[bloodType] || '—';
     };
 
     return (
         <div className="patients-page fade-in">
             <div className="page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
                 <div>
-                    <h1 className="page-header__title">Patients</h1>
-                    <p className="page-header__subtitle">Manage and search your patients</p>
+                    <h1 className="page-header__title">{t('patients.title')}</h1>
+                    <p className="page-header__subtitle">{t('patients.subtitle')}</p>
                 </div>
                 <Link to="/patients/add" className="btn btn--primary">
-                    <FiPlus /> Add Patient
+                    <FiPlus /> {t('patients.addPatient')}
                 </Link>
             </div>
 
@@ -103,11 +115,11 @@ const PatientsPage = () => {
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         className="form-input patients-search__input"
-                        placeholder="Search by name ..."
+                        placeholder={t('patients.searchPlaceholder')}
                     />
                 </div>
                 <button type="submit" className="btn btn--primary">
-                    Search
+                    {t('common.search')}
                 </button>
             </form>
 
@@ -117,8 +129,8 @@ const PatientsPage = () => {
             ) : patients.length === 0 ? (
                 <div className="empty-state">
                     <div className="empty-state__icon">🔍</div>
-                    <h3 className="empty-state__title">No patients found</h3>
-                    <p className="empty-state__text">Try a different search or add a new patient</p>
+                    <h3 className="empty-state__title">{t('patients.noPatientsFound')}</h3>
+                    <p className="empty-state__text">{t('patients.noPatientsSub')}</p>
                 </div>
             ) : (
                 <div className="patients-grid">
@@ -134,7 +146,7 @@ const PatientsPage = () => {
                                         <span className="patient-card__detail"><FiPhone size={13} /> {patient.phoneNumber}</span>
                                     )}
                                     <span className="patient-card__detail">
-                                        {GenderOptions[patient.gender] || '—'} · {BloodTypeOptions[patient.bloodType] || '—'}
+                                        {getGenderLabel(patient.gender)} · {getBloodTypeLabel(patient.bloodType)}
                                     </span>
                                 </div>
                             </div>
@@ -143,7 +155,7 @@ const PatientsPage = () => {
                                     onClick={(e) => handleDeleteClick(e, patient)}
                                     className="btn btn--danger btn--sm"
                                     style={{ zIndex: 2, padding: '8px' }}
-                                    title="Delete Patient"
+                                    title={t('patients.deleteTitle')}
                                 >
                                     <FiTrash2 size={16} />
                                 </button>
@@ -160,17 +172,17 @@ const PatientsPage = () => {
                                 onClick={() => handlePageChange(page - 1)}
                                 disabled={page === 1}
                             >
-                                Previous
+                                {t('common.previous')}
                             </button>
                             <span style={{ display: 'flex', alignItems: 'center', fontWeight: 600, fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
-                                Page {page}
+                                {t('common.page')} {page}
                             </span>
                             <button
                                 className="btn btn--secondary btn--sm"
                                 onClick={() => handlePageChange(page + 1)}
                                 disabled={!hasMore}
                             >
-                                Next
+                                {t('common.next')}
                             </button>
                         </div>
                     )}
@@ -181,8 +193,8 @@ const PatientsPage = () => {
                 isOpen={confirmModal.isOpen}
                 onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
                 onConfirm={confirmDelete}
-                title="Delete Patient"
-                message={`Are you sure you want to permanently delete patient "${confirmModal.patientName}" and all associated medical records?`}
+                title={t('patients.deleteTitle')}
+                message={t('patients.deleteConfirm', { name: confirmModal.patientName })}
             />
         </div>
     );

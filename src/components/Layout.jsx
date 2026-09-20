@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { FiMenu } from 'react-icons/fi';
+import { useLanguage } from '../context/LanguageContext';
 import './Layout.css';
 
 const Layout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const { t } = useLanguage();
 
     return (
         <div className="layout">
@@ -16,7 +18,7 @@ const Layout = () => {
                 <button className="layout__hamburger" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
                     <FiMenu />
                 </button>
-                <span className="layout__mobile-title">🏥 MyClinic</span>
+                <span className="layout__mobile-title">🏥 {t('nav.brand')}</span>
             </div>
 
             <main className="layout__main">

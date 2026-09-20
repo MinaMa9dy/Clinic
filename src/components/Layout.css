@@ -13,6 +13,11 @@
     width: 100%;
 }
 
+[dir="rtl"] .layout__main {
+    margin-left: 0;
+    margin-right: 260px;
+}
+
 .layout__mobile-header {
     display: none;
 }
@@ -23,6 +28,10 @@
         margin-left: 0;
         padding: 16px;
         padding-top: 72px;
+    }
+
+    [dir="rtl"] .layout__main {
+        margin-right: 0;
     }
 
     .layout__mobile-header {

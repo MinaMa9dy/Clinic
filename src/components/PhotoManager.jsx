@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { FiX, FiUpload, FiTrash2, FiMaximize2, FiImage } from 'react-icons/fi';
 import { addPhotos, getPhotosByRelativeId, deletePhoto } from '../api/photoApi';
+import { useLanguage } from '../context/LanguageContext';
 import { toast } from 'react-toastify';
 import './PhotoManager.css';
 
 const PhotoManager = ({ isOpen, onClose, ownerId, ownerType, title }) => {
+    const { t } = useLanguage();
     const [photos, setPhotos] = useState([]);
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -20,7 +22,6 @@ const PhotoManager = ({ isOpen, onClose, ownerId, ownerType, title }) => {
         setLoading(true);
         try {
             const result = await getPhotosByRelativeId(ownerId, ownerType);
-            // Backend returns Ok(photos) which is a plain array directly
             setPhotos(Array.isArray(result) ? result : []);
         } catch (error) {
             console.error('Error fetching photos:', error);
@@ -38,32 +39,31 @@ const PhotoManager = ({ isOpen, onClose, ownerId, ownerType, title }) => {
         try {
             const result = await addPhotos(ownerId, ownerType, files);
             if (result.isSuccess) {
-                toast.success('Photos uploaded successfully');
+                toast.success(t('photoManager.uploadSuccess'));
                 fetchPhotos();
             } else {
-                toast.error(result.message || 'Upload failed');
+                toast.error(result.message || t('photoManager.uploadFailed'));
             }
         } catch (error) {
-            toast.error('Failed to upload photos');
+            toast.error(t('photoManager.uploadFailed'));
         } finally {
             setUploading(false);
         }
     };
 
     const handleDelete = async (photoId) => {
-        if (!confirm('Are you sure you want to delete this photo?')) return;
+        if (!confirm(t('photoManager.deletePhotoConfirm'))) return;
 
         try {
-            // Backend requires ownerType as query param to find the correct table
             const result = await deletePhoto(photoId, ownerType);
             if (result.isSuccess) {
-                toast.success('Photo deleted');
+                toast.success(t('photoManager.deleteSuccess'));
                 setPhotos(photos.filter(p => p.id !== photoId));
             } else {
-                toast.error(result.message || 'Delete failed');
+                toast.error(result.message || t('photoManager.deleteFailed'));
             }
         } catch (error) {
-            toast.error('Failed to delete photo');
+            toast.error(t('photoManager.deleteFailed'));
         }
     };
 
@@ -74,14 +74,14 @@ const PhotoManager = ({ isOpen, onClose, ownerId, ownerType, title }) => {
             <div className="photo-manager card fade-in scale-in" onClick={(e) => e.stopPropagation()}>
                 <div className="photo-manager__header">
                     <h3 className="photo-manager__title">
-                        <FiImage /> {title || 'Photos'}
+                        <FiImage /> {title || t('common.photos')}
                     </h3>
-                    <button className="photo-manager__close" onClick={onClose}><FiX /></button>
+                    <button className="photo-manager__close" onClick={onClose} aria-label={t('common.close')}><FiX /></button>
                 </div>
 
                 <div className="photo-manager__upload">
                     <label className="btn btn--primary btn--sm" style={{ cursor: 'pointer' }}>
-                        <FiUpload /> {uploading ? 'Uploading...' : 'Upload Photos'}
+                        <FiUpload /> {uploading ? t('photoManager.uploading') : t('photoManager.uploadPhotos')}
                         <input
                             type="file"
                             multiple
@@ -99,7 +99,7 @@ const PhotoManager = ({ isOpen, onClose, ownerId, ownerType, title }) => {
                     ) : photos.length === 0 ? (
                         <div className="photo-manager__empty">
                             <FiImage size={48} opacity={0.2} />
-                            <p>No photos yet</p>
+                            <p>{t('photoManager.noPhotosYet')}</p>
                         </div>
                     ) : (
                         <div className="photo-grid">
@@ -107,8 +107,8 @@ const PhotoManager = ({ isOpen, onClose, ownerId, ownerType, title }) => {
                                 <div key={photo.id} className="photo-item">
                                     <img src={photo.relativePath} alt="Medical record" onClick={() => setSelectedPhoto(photo.relativePath)} />
                                     <div className="photo-item__overlay">
-                                        <button onClick={() => setSelectedPhoto(photo.relativePath)} title="View"><FiMaximize2 /></button>
-                                        <button onClick={() => handleDelete(photo.id)} title="Delete" className="delete"><FiTrash2 /></button>
+                                        <button onClick={() => setSelectedPhoto(photo.relativePath)} title={t('common.view')}><FiMaximize2 /></button>
+                                        <button onClick={() => handleDelete(photo.id)} title={t('common.delete')} className="delete"><FiTrash2 /></button>
                                     </div>
                                 </div>
                             ))}
@@ -120,7 +120,7 @@ const PhotoManager = ({ isOpen, onClose, ownerId, ownerType, title }) => {
             {selectedPhoto && (
                 <div className="photo-viewer" onClick={() => setSelectedPhoto(null)}>
                     <img src={selectedPhoto} alt="Fullscreen" />
-                    <button className="photo-viewer__close" onClick={() => setSelectedPhoto(null)}><FiX /></button>
+                    <button className="photo-viewer__close" onClick={() => setSelectedPhoto(null)} aria-label={t('common.close')}><FiX /></button>
                 </div>
             )}
         </div>

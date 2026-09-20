@@ -60,4 +60,9 @@
     color: var(--color-text-muted);
     font-size: 1.1rem;
     flex-shrink: 0;
+    transition: transform 0.2s;
+}
+
+[dir="rtl"] .visit-card__arrow {
+    transform: rotate(180deg);
 }

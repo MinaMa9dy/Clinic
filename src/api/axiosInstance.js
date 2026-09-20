@@ -108,12 +108,13 @@ api.interceptors.response.use(
       }
     }
 
-    // 403 Forbidden — role mismatch, go to login
+    // 403 Forbidden — access denied, reject without wiping session
     if (error.response && error.response.status === 403) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('doctor');
-      window.location.href = '/login';
+      if (error.response.data && error.response.data.message) {
+        error.message = error.response.data.message;
+      } else {
+        error.message = 'Access forbidden: You do not have permission for this resource.';
+      }
       return Promise.reject(error);
     }
 

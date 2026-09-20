@@ -9,6 +9,18 @@
     background: var(--color-bg);
 }
 
+.auth-lang-toggle {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    z-index: 10;
+}
+
+[dir="rtl"] .auth-lang-toggle {
+    right: auto;
+    left: 24px;
+}
+
 .auth-page__bg {
     position: absolute;
     inset: 0;
@@ -52,7 +64,6 @@
 }
 
 @keyframes float {
-
     0%,
     100% {
         transform: translateY(0px);
@@ -123,6 +134,16 @@
 
 .auth-input {
     padding-left: 42px !important;
+}
+
+[dir="rtl"] .auth-input-icon {
+    left: auto;
+    right: 14px;
+}
+
+[dir="rtl"] .auth-input {
+    padding-left: 16px !important;
+    padding-right: 42px !important;
 }
 
 .auth-card__footer {

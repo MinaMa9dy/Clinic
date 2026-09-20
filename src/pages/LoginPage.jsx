@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { loginDoctor } from '../api/authApi';
 import { toast } from 'react-toastify';
-import { FiMail, FiLock, FiLogIn } from 'react-icons/fi';
+import { FiMail, FiLock, FiLogIn, FiGlobe } from 'react-icons/fi';
 import './LoginPage.css';
 
 const LoginPage = () => {
     const [form, setForm] = useState({ email: '', password: '' });
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
+    const { lang, toggleLang, t } = useLanguage();
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -22,14 +24,18 @@ const LoginPage = () => {
         try {
             const result = await loginDoctor(form);
             if (result.isSuccess) {
-                login(result.data); // result.data = { token, refreshToken, fullName, email, expiresAt }
-                toast.success('Welcome back!');
-                navigate('/');
+                const loggedUser = login(result.data);
+                toast.success(t('auth.welcomeBack'));
+                if (loggedUser?.role === 'Admin') {
+                    navigate('/doctors');
+                } else {
+                    navigate('/');
+                }
             } else {
-                toast.error(result.message || 'Login failed');
+                toast.error(result.message || t('auth.loginFailed'));
             }
         } catch (err) {
-            toast.error(err.response?.data?.message || err.message || 'Login failed. Please try again.');
+            toast.error(err.response?.data?.message || err.message || t('auth.loginFailed'));
         } finally {
             setLoading(false);
         }
@@ -43,16 +49,27 @@ const LoginPage = () => {
                 <div className="auth-page__orb auth-page__orb--3"></div>
             </div>
 
+            {/* Language toggle at top corner */}
+            <div className="auth-lang-toggle">
+                <button
+                    type="button"
+                    className="btn btn--secondary btn--sm"
+                    onClick={toggleLang}
+                >
+                    <FiGlobe /> {lang === 'en' ? 'العربية' : 'English'}
+                </button>
+            </div>
+
             <div className="auth-card fade-in">
                 <div className="auth-card__header">
                     <span className="auth-card__logo">🏥</span>
-                    <h1 className="auth-card__title">MyClinic</h1>
-                    <p className="auth-card__subtitle">Sign in to your account</p>
+                    <h1 className="auth-card__title">{t('nav.brand')}</h1>
+                    <p className="auth-card__subtitle">{t('auth.loginTitle')}</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="auth-card__form">
                     <div className="form-group">
-                        <label className="form-label">Email</label>
+                        <label className="form-label">{t('auth.email')}</label>
                         <div className="auth-input-wrapper">
                             <FiMail className="auth-input-icon" />
                             <input
@@ -68,7 +85,7 @@ const LoginPage = () => {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Password</label>
+                        <label className="form-label">{t('auth.password')}</label>
                         <div className="auth-input-wrapper">
                             <FiLock className="auth-input-icon" />
                             <input
@@ -77,7 +94,7 @@ const LoginPage = () => {
                                 value={form.password}
                                 onChange={handleChange}
                                 className="form-input auth-input"
-                                placeholder="Enter your password"
+                                placeholder="••••••••"
                                 required
                             />
                         </div>
@@ -88,13 +105,10 @@ const LoginPage = () => {
                         className="btn btn--primary btn--lg btn--block"
                         disabled={loading}
                     >
-                        {loading ? <span className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }}></span> : <><FiLogIn /> Sign In</>}
+                        {loading ? <span className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }}></span> : <><FiLogIn /> {t('auth.signIn')}</>}
                     </button>
                 </form>
 
-                <p className="auth-card__footer">
-                    Don't have an account? <Link to="/register">Register here</Link>
-                </p>
             </div>
         </div>
     );

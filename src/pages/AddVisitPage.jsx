@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { addVisit } from '../api/visitApi';
 import { searchPatients } from '../api/patientApi';
 import { toast } from 'react-toastify';
@@ -9,6 +10,7 @@ import { FiSave, FiArrowLeft, FiSearch } from 'react-icons/fi';
 
 const AddVisitPage = () => {
     const { doctor } = useAuth();
+    const { t, isRtl } = useLanguage();
     const navigate = useNavigate();
     const [form, setForm] = useState({
         patientId: '',
@@ -48,7 +50,7 @@ const AddVisitPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!form.patientId) { toast.error('Please select a patient'); return; }
+        if (!form.patientId) { toast.error(t('addVisit.selectPatientError')); return; }
         setLoading(true);
         try {
             const dto = {
@@ -60,11 +62,11 @@ const AddVisitPage = () => {
             };
             const result = await addVisit(dto);
             if (result.isSuccess) {
-                toast.success('Visit created!');
+                toast.success(t('addVisit.success'));
                 navigate('/visits');
-            } else toast.error(result.message);
+            } else toast.error(result.message || t('addVisit.failed'));
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to create visit');
+            toast.error(err.response?.data?.message || t('addVisit.failed'));
         } finally {
             setLoading(false);
         }
@@ -74,11 +76,11 @@ const AddVisitPage = () => {
         <div className="fade-in">
             <div className="page-header" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <button className="btn btn--secondary btn--sm" onClick={() => navigate('/visits')}>
-                    <FiArrowLeft /> Back
+                    <FiArrowLeft className="icon-flip-rtl" /> {t('common.back')}
                 </button>
                 <div>
-                    <h1 className="page-header__title">New Visit</h1>
-                    <p className="page-header__subtitle">Schedule a new medical visit</p>
+                    <h1 className="page-header__title">{t('addVisit.title')}</h1>
+                    <p className="page-header__subtitle">{t('addVisit.subtitle')}</p>
                 </div>
             </div>
 
@@ -86,17 +88,27 @@ const AddVisitPage = () => {
                 <form onSubmit={handleSubmit}>
                     {/* Patient Search */}
                     <div className="form-group" style={{ position: 'relative' }}>
-                        <label className="form-label">Patient *</label>
+                        <label className="form-label">{t('addVisit.patientLabel')}</label>
                         <div style={{ position: 'relative' }}>
-                            <FiSearch style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
+                            <FiSearch style={{
+                                position: 'absolute',
+                                left: isRtl ? 'auto' : 14,
+                                right: isRtl ? 14 : 'auto',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                color: 'var(--color-text-muted)',
+                            }} />
                             <input
                                 type="text"
                                 value={patientSearch}
                                 onChange={(e) => handleSearchPatients(e.target.value)}
                                 onFocus={() => patientResults.length > 0 && setShowDropdown(true)}
                                 className="form-input"
-                                style={{ paddingLeft: 40 }}
-                                placeholder="Search patient by name..."
+                                style={{
+                                    paddingLeft: isRtl ? 16 : 40,
+                                    paddingRight: isRtl ? 40 : 16,
+                                }}
+                                placeholder={t('addVisit.searchPatientPlaceholder')}
                                 required
                             />
                         </div>
@@ -120,7 +132,7 @@ const AddVisitPage = () => {
                                         onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                                     >
                                         <strong>{p.fullName}</strong>
-                                        <span style={{ color: 'var(--color-text-muted)', marginLeft: 8 }}>{p.phoneNumber}</span>
+                                        <span style={{ color: 'var(--color-text-muted)', marginInlineStart: 8 }}>{p.phoneNumber}</span>
                                     </div>
                                 ))}
                             </div>
@@ -129,29 +141,31 @@ const AddVisitPage = () => {
 
                     <div className="grid-2">
                         <div className="form-group">
-                            <label className="form-label">Visit Type *</label>
+                            <label className="form-label">{t('addVisit.visitTypeLabel')}</label>
                             <select name="type" value={form.type} onChange={handleChange} className="form-select">
                                 {MedicalVisitOptionsList.map((opt) => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.value === 1 ? t('enums.visitType.new') : t('enums.visitType.followUp')}
+                                    </option>
                                 ))}
                             </select>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Fee *</label>
+                            <label className="form-label">{t('addVisit.feeLabel')}</label>
                             <input type="number" name="fee" value={form.fee} onChange={handleChange} className="form-input" placeholder="0.00" step="0.01" required />
                         </div>
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Notes</label>
-                        <textarea name="notes" value={form.notes} onChange={handleChange} className="form-textarea" placeholder="Any additional notes..." />
+                        <label className="form-label">{t('addVisit.notesLabel')}</label>
+                        <textarea name="notes" value={form.notes} onChange={handleChange} className="form-textarea" placeholder={t('common.notesPlaceholder')} />
                     </div>
 
                     <div style={{ display: 'flex', gap: 12 }}>
                         <button type="submit" className="btn btn--primary btn--lg" disabled={loading}>
-                            {loading ? <span className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }}></span> : <><FiSave /> Create Visit</>}
+                            {loading ? <span className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }}></span> : <><FiSave /> {t('addVisit.createVisit')}</>}
                         </button>
-                        <button type="button" className="btn btn--secondary btn--lg" onClick={() => navigate('/visits')}>Cancel</button>
+                        <button type="button" className="btn btn--secondary btn--lg" onClick={() => navigate('/visits')}>{t('common.cancel')}</button>
                     </div>
                 </form>
             </div>

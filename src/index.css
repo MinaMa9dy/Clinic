@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
   /* Colors - Dark clinic theme */
@@ -490,3 +490,26 @@ body {
   justify-content: flex-end;
   margin-top: 24px;
 }
+
+/* ==================== RTL OVERRIDES ==================== */
+[dir="rtl"] body {
+  font-family: 'Cairo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+[dir="rtl"] .table th {
+  text-align: right;
+}
+
+[dir="rtl"] .form-input,
+[dir="rtl"] .form-select,
+[dir="rtl"] .form-textarea {
+  text-align: right;
+}
+
+[dir="rtl"] .icon-flip-rtl {
+  transform: rotate(180deg);
+}
+
+[dir="rtl"] .modal__actions {
+  justify-content: flex-start;
+}
