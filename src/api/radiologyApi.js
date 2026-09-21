@@ -1,7 +1,7 @@
 import api from './axiosInstance';
 
-export const addRadiology = async (dto) => {
-    const response = await api.post('/Radiology', dto);
+export const addRadiology = async (notes, visitId) => {
+    const response = await api.post('/Radiology', { medicalVisitId: visitId, notes });
     return response.data;
 };
 

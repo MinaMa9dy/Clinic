@@ -1,7 +1,7 @@
 import api from './axiosInstance';
 
-export const addLabTest = async (dto) => {
-    const response = await api.post('/LabTest', dto);
+export const addLabTest = async (notes, visitId) => {
+    const response = await api.post('/LabTest', { medicalVisitId: visitId, notes });
     return response.data;
 };
 
